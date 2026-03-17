@@ -9,12 +9,14 @@ class Github(commands.Cog) :
                 "id" : "2358006",
                 "title" : "📂 과제 아카이브",
                 "description" : "과제는 여기에 모아뒀어요.",
+                "color" : 0x2b3137,
                 "aliases" : ["과제", "이삼오팔공공육"]
             },
             "penguinjean0421" : {
                 "id" : "penguinjean0421",
                 "title" : "📂 penguinjean's Github", 
                 "description" : "봇 개발자의 개인 Github",
+                "color" : 0x0f4c81, 
                 "aliases" : ["penguinjean", "펭귄진", "펭귄청바지"]
             }
         }
@@ -24,7 +26,7 @@ class Github(commands.Cog) :
         embed = discord.Embed(
             title = f"{data['title']}",
             description = f"{data['description']}",
-            color = 0x2b3137
+            color = data['color']
         )
         embed.add_field(name = "Link", value = f"[바로가기](https://github.com/{data['id']})", inline = False)
         await ctx.send(embed = embed)
