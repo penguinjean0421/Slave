@@ -8,29 +8,33 @@ class Aespa(commands.Cog) :
         self.aespa_data = {
             "aespa" : {
                 "id" : "aespa_offical",
-                "xiaohongshu" : "684e9fae000000001b0229c4",
+                "id1" : "aespa.offical", 
+                "pinterest" : "aespicyclub",
+                "jptwitter" : "aespaJPofficial",
+                "bilibili" : "2128487337",
+                "douyin" : "h5ANeSK5EN8",
                 "weibo" : "7479199632",
-                "youtube" : "aespa",
+                "xiaohongshu": "684e9fae000000001b0229c4",
                 "color" : 0x988eee, 
                 "emoji" : "💜"
             },
             "karina" : {
-                "id" : "katarinabluu", 
+                "instagram" : "katarinabluu", 
                 "color" : 0x0000ff, 
                 "emoji" : "💙"
             },
             "giselle": {
-                "id" : "aerichandesu", 
+                "instagram" : "aerichandesu", 
                 "color" : 0xff0000, 
                 "emoji" : "🌙"
             },
             "winter" : {
-                "id" : "imwinter", 
+                "instagram" : "imwinter", 
                 "color" : 0x00ff00,
                 "emoji" : "⭐️" 
             },
             "ningning": {
-                "id" : "imnotningning", 
+                "instagram" : "imnotningning", 
                 "weibo" : "7842391335",
                 "color" : 0xffff00, 
                 "emoji" : "🦋"
@@ -38,26 +42,52 @@ class Aespa(commands.Cog) :
         }
 
     # SNS 임베드
-    async def send_sns_embed(self, ctx, name) :
+    async def send_sns_embed(self, ctx, name, region = None) :
         data = self.aespa_data[name]
-        embed = discord.Embed(
+        if name == "aespa" :
+            embed = discord.Embed(
             title = f"{data['emoji']} Be my æ, {name}'s SNS",
             color = data['color']
-        )   
-        embed.add_field(name = "Instagram", value = f"[@{data['id']}](https://www.instagram.com/{data['id']})", inline = False)
-        if name == "aespa" :
-            embed.add_field(name = "Tiktok", value = f"[@{data['id']}](https://www.tiktok.com/@{data['id']})",inline = False )
+            )
+
+            if region in ["kr", "kor", "korea", "대한민국", "한국"] :
+                embed.add_field(name = "Instagram", value = f"[바로가기](https://www.instagram.com/{data['id']})", inline = True)
+                embed.add_field(name = "Tiktok", value = f"[바로가기](https://www.tiktok.com/@{data['id1']})",inline = True)
+                embed.add_field(name = "Twitter", value = f"[바로가기](https://www.x.com/{data['id']})", inline = True)
+                embed.add_field(name = "Pinterest", value = f"[바로가기](https://pinterest.com/{name})", inline = True)
+                embed.add_field(name = "Snapchat", value = f"[바로가기](https://www.snapchat.com/@{data['id1']})", inline = True)
+
+            elif region in ["cn", "china", "중국"] :
+                embed.add_field(name = "BiliBili", value = f"[바로가기](https://space.bilibili.com/{data['bilibili']})", inline = True)
+                embed.add_field(name = "Douyin", value = f"[바로가기](https://v.douyin.com/{data['douyin']})", inline = True)
+                embed.add_field(name = "Weibo", value = f"[바로가기](https://weibo.com/u/{data['weibo']})", inline = True)
+                embed.add_field(name = "Xiaohongshu", value = f"[바로가기](https://www.xiaohongshu.com/user/profile/{data['xiaohongshu']})", inline = True)
+            
+            elif region in ["jp", "japan", "일본"] :
+                embed.add_field(name = "🇯🇵 Offical Twitter", value = f"[바로가기](https://www.x.com/{data['jptwitter']})", inline = False)
+            
+            else :
+                embed = discord.Embed(
+                title = f"{data['emoji']} Be my æ, {name}'s Community",
+                color = data['color']
+                )
+                embed.add_field(name = "Homepage", value = f"[바로가기](https://{name}.com)", inline = True)
+                embed.add_field(name = "Weverse", value = f"[바로가기](https://weverse.io/{name})", inline = True)
+                embed.add_field(name = "Youtube", value = f"[바로가기](https://www.youtube.com/@{name})", inline = True)
+
+        elif name in ["karina", "giselle", "winter"] : 
+            embed.add_field(name = "Instagram", value = f"[@{data['instagram']}](https://www.instagram.com/{data['instagram']})", inline = False)
+
+        elif name == "ningning" :
+            embed.add_field(name = "Instagram", value = f"[@{data['instagram']}](https://www.instagram.com/{data['instagram']})", inline = False)
             embed.add_field(name = "Weibo", value = f"[{name} Weibo 바로가기](https://weibo.com/u/{data['weibo']})", inline = False)
-            embed.add_field(name = "X", value = f"[@{data['id']}](https://www.x.com/{data['id']})", inline = False)
-            embed.add_field(name = "Xiaohongshu", value = f"[{name} Xiaohongshu 바로가기](https://www.xiaohongshu.com/user/profile/{data['xiaohongshu']})", inline = False)
-            embed.add_field(name = "Youtube", value = f"[@{data['id']}](https://www.youtube.com/@{data['youtube']})", inline = False)
-        if name == "ningning" :
-            embed.add_field(name = "Weibo", value = f"[{name} Weibo 바로가기](https://weibo.com/u/{data['weibo']})", inline = False)
+
         await ctx.send(embed = embed)
 
     @commands.command(name = "aespa", aliases = ['에스파'])
-    async def aespa(self, ctx) :
-        await self.send_sns_embed(ctx, "aespa")
+    async def aespa(self, ctx, region : str = None):
+        search_region = region.lower().strip() if region else None
+        await self.send_sns_embed(ctx, "aespa", search_region)
 
     @commands.command(name = "karina", aliases = ['카리나'])
     async def karina(self, ctx) :
