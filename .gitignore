@@ -1,5 +1,8 @@
-# Security
+# Token & API
 .env
+
+# Sever Channel
+config.json
 
 # mac OS
 .DS_Store

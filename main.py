@@ -12,7 +12,9 @@ class MyBot(commands.Bot) :
         raw_prefixes = os.getenv("BOT_PREFIXES", "æ")
         prefixes = [p.strip() for p in raw_prefixes.split(",")]
         intents = discord.Intents.default()
+        intents.members = True         
         intents.message_content = True
+        intents.voice_states = True
         super().__init__(command_prefix = prefixes, intents = intents, help_command = None)
 
     # cogs 폴더 내의 모든 .py 파일을 로드
