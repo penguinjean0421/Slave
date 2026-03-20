@@ -38,16 +38,25 @@ class System(commands.Cog) :
         with open(self.config_file, 'w', encoding = 'utf-8') as f:
             json.dump(self.server_configs, f, indent = 4, ensure_ascii=False)
 
-    def get_server_data(self, guild_id) :
-        # 특정 서버의 설정 데이터(dict)를 가져오거나 초기화합
-        gid = str(guild_id) # JSON 키는 문자열이어야 함
+    def get_server_data(self, guild) :
+        """특정 서버의 설정 데이터를 가져오거나 갱신합니다."""
+        gid = str(guild.id) # JSON 키는 문자열
         if gid not in self.server_configs :
-            self.server_configs[gid] = {"log_channel_id" : None, "command_channel_id" : None}
+            self.server_configs[gid] = {
+                "server_name": guild.name,
+                "owner_id": guild.owner_id,
+                "log_channel_id" : None, 
+                "command_channel_id" : None
+            }
+        else:
+            # 실시간으로 이름과 서버장 정보 동기화
+            self.server_configs[gid]["server_name"] = guild.name
+            self.server_configs[gid]["owner_id"] = guild.owner_id
+            
         return self.server_configs[gid]
 
     def get_log_channel(self, guild) :
-        # 해당 서버의 로그 채널 ID를 가져옴
-        data = self.get_server_data(guild.id)
+        data = self.get_server_data(guild) 
         log_id = data.get("log_channel_id")
         
         if log_id :
@@ -55,8 +64,7 @@ class System(commands.Cog) :
         return guild.system_channel
     
     async def cog_check(self, ctx) :
-        # 해당 서버의 명령어 채널 설정을 확인
-        data = self.get_server_data(ctx.guild.id)
+        data = self.get_server_data(ctx.guild)
         cmd_id = data.get("command_channel_id")
 
         if cmd_id and ctx.channel.id != cmd_id :
@@ -73,7 +81,7 @@ class System(commands.Cog) :
         gid = str(ctx.guild.id)
 
         # 서버 데이터 보장
-        self.get_server_data(ctx.guild.id)
+        self.get_server_data(ctx.guild)
 
         if target == "log" :
             self.server_configs[gid]["log_channel_id"] = target_channel.id
@@ -101,9 +109,13 @@ class System(commands.Cog) :
 # 설정 해제
     @commands.command(name="reset")
     @commands.has_permissions(administrator=True)
-    async def reset_command(self, ctx, target: str = None) :
+    async def reset_command(self, ctx, target : str = None, channel : discord.TextChannel = None) :
         target = target.lower() if target else None
+        target_channel = channel or ctx.channel
         gid = str(ctx.guild.id)
+
+        # 서버 데이터 보장
+        self.get_server_data(ctx.guild)
         
         if gid not in self.server_configs:
             return await ctx.send("❌ 설정된 데이터가 없습니다.")
@@ -111,12 +123,12 @@ class System(commands.Cog) :
         if target == "log" :
             self.server_configs[gid]["log_channel_id"] = None
             self.save_config()
-            await ctx.send("✅ **로그 채널** 설정이 초기화되었습니다.")
+            await ctx.send(f"✅ {target_channel.mention}은 이제 **로그채널**이 아닙니다.")
         
         elif target == "bot" :
             self.server_configs[gid]["command_channel_id"] = None
             self.save_config()
-            await ctx.send("✅ **봇 명령어 채널** 제한이 해제되었습니다.")
+            await ctx.send(f"✅ {target_channel.mention}은 **봇 명령어 채널** 제한이 없습니다.")
             
         elif target == "all" :
             self.server_configs[gid] = {"log_channel_id": None, "command_channel_id": None}
@@ -134,7 +146,7 @@ class System(commands.Cog) :
         data = self.bot_data[name]
         embed = discord.Embed(
             title = f"👋 {data['name']} 입니다.",
-            description = f"{data['description']} {data['description1']} {data['description2']}",
+            description = f"{data['description']} {data['description1']}",
             color = data['color']
         )
 
@@ -143,7 +155,7 @@ class System(commands.Cog) :
         embed.add_field(name = "⚙️ 채널설정(관리자 전용)", value = "`set [종류]`\n `reset [종류]`", inline = False)
         embed.add_field(name = "💻 누군가의 깃허브", value = "`github 과제`", inline = False)
         embed.add_field(name = "🛠️ 유틸리티", value = "`choose [A] [B]`\n", inline = False)
-        embed.add_field(name = "🎁 히든 명령어", value = "제작자가 좋아하는 것을 입력해 보아요 ...", inline = False)
+        embed.add_field(name = "🎁 히든 명령어", value = "찾아보시던가", inline = False)
         embed.set_thumbnail(url = self.bot.user.display_avatar.url)
         embed.set_footer(text = "상세 도움말은 æhelp 입력하세요.", icon_url = self.bot.user.display_avatar.url)
         await channel.send(embed = embed)
