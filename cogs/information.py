@@ -4,22 +4,22 @@ from discord.ext import commands
 class Information(commands.Cog) :
     def __init__(self, bot) :
         self.bot = bot
-        self.bot_data = {
+        self.help_data = {
             "bot" : { 
                 "name" : "Slave",
-                "description" : "서버에 초대해 주셔서 감사합니다!\n", 
-                "description1" : "즐거운 서버 활동을 돕기 위한 주요 명령어들을 안내해 드립니다.\n",
-                "color" : 0x007acc,
+                "greeting" : "서버에 초대해 주셔서 감사합니다!\n", 
+                "summary" : "즐거운 서버 활동을 돕기 위한 주요 명령어들을 안내해 드립니다.\n",
+                "theme_color" : 0x007acc,
             },
         }
 
         self.credit_data = {
             "credit" : {
-                "name" : "Slave",
+                "bot_name" : "Slave",
                 "developer" : "penguinjean0421",
                 "illustrator" : "aram", 
                 "supporter" : "목대 겜소과 친목 디코",
-                "color" : 0x5d2b90, 
+                "theme_color" : 0x5d2b90, 
             },
         }
 
@@ -31,16 +31,16 @@ class Information(commands.Cog) :
         await self.send_welcome_help(ctx.channel, "bot")
 
     async def send_welcome_help(self, channel, name):
-        data = self.bot_data[name]
+        data = self.help_data[name]
         prefix = self.bot.command_prefix
         if isinstance(prefix, list): prefix = prefix[0]
 
-        embed = discord.Embed(title = f"👋 {data['name']} 입니다.", description = f"{data['description']}{data['description1']}", color = data['color'])
-        embed.add_field(name = "🆔 접두사(Prefix)", value = f"`{prefix}`", inline = True)
-        embed.add_field(name = "📖 도움말 명령어", value = f"`{prefix}help` / `{prefix}help 관리자`", inline = True)
+        embed = discord.Embed(title = f"👋 {data['name']} 입니다.", description = f"{data['greeting']}{data['summary']}", color = data['theme_color'])
+        embed.add_field(name = "🆔 접두사(Prefix)", value = f"`{prefix}`", inline = False)
+        embed.add_field(name = "📖 도움말 명령어", value = f"`{prefix}help` / `{prefix}help 관리자`", inline = False)
         embed.add_field(name = "⚙️ 서버 관리", value = f"상세 명령은 `{prefix}help 관리자` 참고", inline = False)        
-        embed.add_field(name = "💻 오픈소스", value = f"`{prefix}github 과제`", inline = True)
-        embed.add_field(name = "✨ 유틸리티", value = f"`{prefix}choose [A] [B]`", inline = True)
+        embed.add_field(name = "💻 오픈소스", value = f"`{prefix}github 과제`", inline = False)
+        embed.add_field(name = "✨ 유틸리티", value = f"`{prefix}choose [A] [B]`", inline = False)
         embed.set_thumbnail(url = self.bot.user.display_avatar.url)
         embed.set_footer(text = f"상세 도움말은 {prefix}help를 입력하세요.", icon_url = self.bot.user.display_avatar.url)
         
@@ -85,12 +85,19 @@ class Information(commands.Cog) :
 
     async def send_credit(self, ctx, name) :
         data = self.credit_data[name]
-        embed = discord.Embed(title = f"Thanks for making {data['name']}", color = data['color'])
-        embed.add_field(name = "Developer", value = f"[@{data['developer']}](https://www.github.com/{data['developer']})", inline = False)
-        embed.add_field(name = "Illustrator", value = f"@{data['illustrator']}", inline = False)
-        embed.add_field(name = "Supporter", value = f"{data['supporter']}", inline = False)
-        embed.add_field(name = "Soure Code", value = f"[바로가기](https://www.github.com/{data['developer']}/{data['name']})", inline = False)
-        embed.add_field(name = "Contact", value = f"{data['developer']}@gmail.com", inline = False) 
+        embed = discord.Embed(
+            title = f"Thanks for using {data['bot_name']}", 
+            description=f"{data['bot_name']}를 함께 만들어주신 분들입니다.",
+            color = data['theme_color'],
+            )
+        
+        embed.add_field(name="👤 Developer", value=f"[{data['developer']}](https://github.com/{data['developer']})", inline=True)
+        embed.add_field(name="🎨 Illustrator", value=f"@{data['illustrator']}", inline=True)
+        embed.add_field(name="🤝 Supporter", value=data['supporter'], inline=False)
+        embed.add_field(name="🔗 Source Code", value=f"[GitHub Repository](https://github.com/{data['developer']}/{data['bot_name']})", inline=False)
+        embed.add_field(name="📧 Contact", value=f"`{data['developer']}@gmail.com`", inline=False)
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        embed.set_footer(text=f"© 2026 {data['developer']} All rights reserved.")
         await ctx.send(embed = embed)
 
     @commands.Cog.listener()
