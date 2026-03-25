@@ -1,4 +1,6 @@
 # Slave
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue) ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red) ![Discord](https://img.shields.io/badge/discord-bot-5865F2?logo=discord&logoColor=white)
+
 **Slave**는 서버 관리를 중심으로 실시간 로그 모니터링, 유틸리티 기능을 제공하는 다기능 디스코드 봇입니다. `config.json`을 통한 자동 서버 설정을 지원하며, `환경 변수(.env)`를 사용하여 보안성을 극대화했습니다.
 
 ## 초대하기
