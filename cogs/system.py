@@ -87,6 +87,11 @@ class System(commands.Cog):
         if not match: return None
         amount, unit = int(match.group(1)), match.group(2)
         return amount * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[unit]
+    
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx):
+        if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            await ctx.message.delete()
 
     # --- 이벤트 리스너 (일반 로그) ---
 
