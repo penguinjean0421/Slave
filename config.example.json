@@ -1,0 +1,10 @@
+{
+    "000000000000000000": {
+        "server_name": "예시 서버 이름",
+        "owner_id": 0,
+        "owner_name": "서버장_이름",
+        "log_channel_id": null,
+        "punish_log_channel_id": null,
+        "command_channel_id": null
+    }
+}
