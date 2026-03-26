@@ -25,17 +25,15 @@ class Information(commands.Cog) :
 
     @commands.command(name="help", aliases=["도움말", "guide"])
     async def help_command(self, ctx: commands.Context, category: str = None):
-        """봇 사용법 및 관리자 명령어를 안내합니다."""
         prefix = ctx.prefix
         admin_keywords = ["관리자", "어드민", "admin", "management", "administrator"]
         
         if category and category.lower() in admin_keywords:
             return await self.send_admin_help(ctx, prefix)
         
-        await self.send_welcome_help(ctx.channel, "bot", prefix)
+        await self.send_welcome_help(ctx.channel, "bot", ctx.prfix)
 
     async def send_welcome_help(self, channel: discord.abc.Messageable, name: str, prefix: str = None):
-        """일반 사용자용 웰컴 도움말을 전송합니다."""
         data = self.help_data[name]
         if prefix is None:
             prefix = self.bot.command_prefix
@@ -59,7 +57,6 @@ class Information(commands.Cog) :
         await channel.send(embed=embed)
 
     async def send_admin_help(self, ctx: commands.Context, prefix: str):
-        """관리자 전용 명령어 가이드를 전송합니다."""
         embed = discord.Embed(
             title="🛠️ 서버 관리자 명령어 가이드", 
             description="서버 관리 권한이 있는 멤버만 사용 가능한 명령어입니다.", 
@@ -95,7 +92,6 @@ class Information(commands.Cog) :
         await ctx.send(embed=embed)
 
     async def send_credit(self, ctx: commands.Context, name: str):
-        """제작자 정보를 전송합니다."""
         data = self.credit_data[name]
         embed = discord.Embed(
             title=f"Thanks for using {data['bot_name']}", 

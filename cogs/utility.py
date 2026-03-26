@@ -37,7 +37,7 @@ class Utility(commands.Cog):
         embed = discord.Embed(
             title="🤔 제 선택은요...",
             description=f"작성하신 **{len(options)}개**의 선택지 중에서 골라봤어요!",
-            color=0x3498DB  # 시스템 정보 색상
+            color=0x3498DB
         )
         embed.add_field(name="📋 후보 목록", value=f"`{'`, `'.join(options)}`", inline=False)
         embed.add_field(name="✨ 최종 결정", value=f"🎉 **{select}**", inline=False)
