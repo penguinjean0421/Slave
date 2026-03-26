@@ -25,15 +25,17 @@ class Information(commands.Cog) :
 
     @commands.command(name="help", aliases=["도움말", "guide"])
     async def help_command(self, ctx, category: str = None):
+        prefix = ctx.prefix
         admin_keywords = ["관리자", "어드민", "admin", "management", "administrator"]
         if category and category.lower() in admin_keywords:
-            return await self.send_admin_help(ctx.channel, ctx.prefix)
-        await self.send_welcome_help(ctx.channel, "bot")
+            return await self.send_admin_help(ctx.channel, prefix)
+        await self.send_welcome_help(ctx.channel, "bot", prefix)
 
-    async def send_welcome_help(self, channel, name):
+    async def send_welcome_help(self, channel, name, prefix = None):
         data = self.help_data[name]
-        prefix = self.bot.command_prefix
-        if isinstance(prefix, list): prefix = prefix[0]
+        if prefix is None:
+            prefix = self.bot.command_prefix
+            if isinstance(prefix, list): prefix = prefix[0]
 
         embed = discord.Embed(title = f"👋 {data['name']} 입니다.", description = f"{data['greeting']}{data['summary']}", color = data['theme_color'])
         embed.add_field(name = "🆔 접두사(Prefix)", value = f"`{prefix}`", inline = False)

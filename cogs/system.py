@@ -137,13 +137,15 @@ class System(commands.Cog):
         await self.send_to_log(member.guild, discord.Embed(description=desc, color=color))
 
     # --- 설정 명령어 ---
-
     @commands.command(name="set")
     @commands.has_permissions(administrator=True)
     async def set_command(self, ctx, target: str = None, channel: discord.TextChannel = None):
+        # [동적 prefix 적용]
+        prefix = ctx.prefix 
         key_map = {"log": "log_channel_id", "bot": "command_channel_id", "punish": "punish_log_channel_id"}
+        
         if not target or target.lower() not in key_map:
-            return await ctx.send("❓ 사용법: `!set [log/punish/bot] [#채널]`")
+            return await ctx.send(f"❓ 사용법: `{prefix}set [log/punish/bot] [#채널]`")
         
         target = target.lower()
         target_channel = channel or ctx.channel
@@ -156,8 +158,11 @@ class System(commands.Cog):
     @commands.command(name="reset", aliases=["초기화"])
     @commands.has_permissions(administrator=True)
     async def reset_command(self, ctx, target: str = None):
+        # [동적 prefix 적용]
+        prefix = ctx.prefix
         gid = str(ctx.guild.id)
         key_map = {"log": "log_channel_id", "bot": "command_channel_id", "punish": "punish_log_channel_id"}
+        
         if target == "all":
             self.server_configs.pop(gid, None)
             await ctx.send("✅ 모든 설정이 초기화되었습니다.")
@@ -165,8 +170,10 @@ class System(commands.Cog):
             self.server_configs[gid][key_map[target]] = None
             await ctx.send(f"✅ **{target.upper()}** 채널 설정이 해제되었습니다.")
         else:
-            await ctx.send("❓ 사용법: `!reset [log/punish/bot/all]`")
+            await ctx.send(f"❓ 사용법: `{prefix}reset [log/punish/bot/all]`")
         self.save_config()
+
+# -- 제제 명령어 -- 
 
     @commands.command(name="mute", aliases=["뮤트"])
     @commands.has_permissions(administrator=True)
@@ -204,8 +211,12 @@ class System(commands.Cog):
     @commands.command(name="timeout", aliases=["타임아웃"])
     @commands.has_permissions(administrator=True)    
     async def server_timeout(self, ctx, member: discord.Member = None, time: str = None, *, reason="사유 없음"):
+        prefix = ctx.prefix
         seconds = self.parse_time(time)
-        if not member or not seconds: return await ctx.send("❓ 사용법: `!timeout @유저 10m [사유]`")
+        
+        if not member or not seconds: 
+            return await ctx.send(f"❓ 사용법: `{prefix}timeout @유저 [시간] [사유]`\n예: `{prefix}timeout @펭귄 10m 도배`")
+            
         try:
             await member.timeout(timedelta(seconds=seconds), reason=f"실행자: {ctx.author} | {reason}")
             embed = discord.Embed(title="⏳ 타임아웃", description=f"{member.mention} ({time})\n사유: {reason}", color=0xffa500)
@@ -214,19 +225,20 @@ class System(commands.Cog):
         except Exception as e:
             await ctx.send(f"❌ 오류: {e}")
 
-    # 서버 타임아웃 해제
     @commands.command(name="untimeout", aliases=["타임아웃해제", "언타임아웃"])
     @commands.has_permissions(administrator=True)    
     async def server_untimeout(self, ctx, member: discord.Member = None, *, reason="관리자에 의한 해제"):
+        # [동적 prefix 적용]
+        prefix = ctx.prefix
         if not member: 
-            return await ctx.send("❓ 타임아웃을 해제할 유저를 언급해 주세요.")
+            return await ctx.send(f"❓ 사용법: `{prefix}untimeout @유저`")
+            
         if not member.timed_out_until:
             return await ctx.send(f"❌ {member.mention} 님은 현재 타임아웃 상태가 아닙니다.")
+            
         try:
             await member.timeout(None, reason=f"실행자: {ctx.author} | {reason}")
-            embed = discord.Embed(title="✅ 타임아웃 해제", description=f"{member.mention} **(ID: {member.id})** 님의 타임아웃이 해제되었습니다.", color=0x2ECC71)
-            embed.add_field(name="해제 사유", value=reason)
-            embed.set_footer(text=f"실행자: {ctx.author}")
+            embed = discord.Embed(title="✅ 타임아웃 해제", description=f"{member.mention} 님의 타임아웃이 해제되었습니다.", color=0x2ECC71)
             await ctx.send(embed=embed)
             await self.send_punish_log(ctx.guild, embed)
         except Exception as e:
@@ -244,7 +256,7 @@ class System(commands.Cog):
     @commands.command(name="ban", aliases=["차단"])
     @commands.has_permissions(ban_members=True)
     async def server_ban(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member: return
+        if not member: return await ctx.send(f"❓ 사용법: `{prefix}ban [이름#태그] 또는 [ID] [사유]`")
         await member.ban(reason=f"실행자: {ctx.author} | {reason}", delete_message_seconds=86400)
         embed = discord.Embed(title="🚫 차단 완료", description=f"{member.mention} 차단됨\n사유: {reason}", color=0xff0000)
         await ctx.send(embed=embed)
@@ -253,7 +265,10 @@ class System(commands.Cog):
     @commands.command(name="unban", aliases=["차단해제"])
     @commands.has_permissions(ban_members=True)
     async def server_unban(self, ctx, *, user_spec: str = None):
-        if not user_spec: return await ctx.send("❓ 이름#태그 또는 ID를 입력하세요.")
+        prefix = ctx.prefix
+        if not user_spec: 
+            return await ctx.send(f"❓ 사용법: `{prefix}unban [이름#태그] 또는 [ID]`")
+            
         async for entry in ctx.guild.bans():
             if user_spec in [str(entry.user.id), str(entry.user)]:
                 await ctx.guild.unban(entry.user)

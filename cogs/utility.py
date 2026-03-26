@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 import random
 
-class Utility(commands.Cog) :
-    def __init__(self, bot) :
+class Utility(commands.Cog):
+    def __init__(self, bot):
         self.bot = bot
         self.menu_list = {
             "한식": ["비빔밥 🥗", "김치찌개 🥘", "삼겹살 🥓", "불고기 🥩", "국밥 🍲", "제육볶음 🍛"],
@@ -21,12 +21,15 @@ class Utility(commands.Cog) :
         }
 
     # 제시된 것중에 하나 선택
-    @commands.command(name = "choose")
-    async def choose(self, ctx, *options) : 
+    @commands.command(name="choose")
+    async def choose(self, ctx, *options): 
+        # [동적 prefix 적용]
+        prefix = ctx.prefix
+        
         if len(options) < 2:
             embed = discord.Embed(
-                title="❓ 최소 2개 이상의 선택지를 입력해 주세요!",
-                description="예: `æchoose 짜장면 짬뽕 탕수육`",
+                title="❓ 선택지가 부족해요!",
+                description=f"최소 2개 이상의 선택지를 입력해 주세요.\n예: `{prefix}choose 짜장면 짬뽕 탕수육`",
                 color=0xFF5555
             )
             return await ctx.send(embed=embed)
@@ -46,17 +49,21 @@ class Utility(commands.Cog) :
     # 메뉴 추천
     @commands.command(name="menu", aliases=["메뉴", "메뉴추천", "뭐먹지", "머먹지"])
     async def recommend_menu(self, ctx, category: str = None):
+        # [동적 prefix 적용]
+        prefix = ctx.prefix
         target_list = None
         display_category = ""
 
+        # 시간대 데이터 확인
         if category in self.time_data:
             target_list = self.time_data[category]
             display_category = category
-
+        # 카테고리 데이터 확인
         elif category in self.menu_list:
             target_list = self.menu_list[category]
             display_category = category
 
+        # 카테고리가 없거나 입력되지 않은 경우 전체에서 랜덤
         if not target_list:
             combined_menus = []
             for m in self.menu_list.values(): combined_menus.extend(m)
@@ -73,9 +80,5 @@ class Utility(commands.Cog) :
             color=0xF1C40F
         )
         embed.add_field(name="오늘의 추천", value=f"✨ **{food}**", inline=False)
-        embed.set_footer(text="팁: !뭐먹지 [아침/점심/한식/중식/양식 등]을 입력해보세요!")
-        
-        await ctx.send(embed=embed)
-
-async def setup(bot) :
-    await bot.add_cog(Utility(bot))
+        # [푸터의 팁 부분에 동적 prefix 적용]
+        embed.set_footer(text=f"팁: {prefix}뭐먹지 [아침/점심/한식/중식/일식 등]을 입력해 보세요!")
