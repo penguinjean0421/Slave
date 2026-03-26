@@ -4,25 +4,38 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from pathlib import Path
+from typing import List
 
 load_dotenv()
 
-class Slave(commands.Bot) :
-    def __init__(self) :
-        raw_prefixes = os.getenv("BOT_PREFIXES")
-        prefixes = [p.strip() for p in raw_prefixes.split(",")]
+class Slave(commands.Bot):
+    def __init__(self):
+        raw_prefixes = os.getenv("BOT_PREFIXES", "!")
+        prefixes: List[str] = [p.strip() for p in raw_prefixes.split(",")]
 
+        # 인텐트 설정 (봇의 권한 범위)
         intents = discord.Intents.default()
-        intents.members = True         
-        intents.message_content = True
-        intents.voice_states = True
+        intents.members = True          # 멤버 관련 이벤트 (입퇴장 등)
+        intents.message_content = True  # 메시지 내용 읽기 (명령어 인식)
+        intents.voice_states = True     # 음성 채널 상태 (입퇴장 로그 등)
 
-        super().__init__(command_prefix = prefixes, intents = intents, help_command = None)
+        super().__init__(
+            command_prefix=prefixes, 
+            intents=intents, 
+            help_command=None  # Information Cog에서 커스텀 도움말을 사용하므로 비활성화
+        )
 
-    # cogs 폴더 내의 모든 .py 파일을 로드
-    async def setup_hook(self) :
+    async def setup_hook(self):
         cogs_path = Path(__file__).parent / "cogs"
+        
+        if not cogs_path.exists():
+            cogs_path.mkdir()
+            print("📂 'cogs' 폴더가 없어 새로 생성했습니다.")
+
         for filepath in cogs_path.glob("*.py"):
+            if filepath.stem.startswith("__"):
+                continue
+                
             cog_name = f"cogs.{filepath.stem}"
             try:
                 await self.load_extension(cog_name)
@@ -31,13 +44,32 @@ class Slave(commands.Bot) :
                 print(f"❌ {cog_name} 로드 실패 -> {e}")
 
     async def on_ready(self):
-        print(f"🟢 {self.user.name} Online, (Prefix : {', '.join(self.command_prefix)})")
-        await self.change_presence(activity=discord.Game("Noot Noot"))
+        print("-" * 30)
+        print(f"🟢 {self.user.name} 온라인!")
+        print(f"🆔 ID: {self.user.id}")
+        print(f"🔢 접두사: {', '.join(self.command_prefix)}")
+        print("-" * 30)
 
-async def main() :
+        await self.change_presence(activity=discord.Game("Noot Noot 🐧"))
+
+async def main():
     bot = Slave()
-    async with bot :
-        await bot.start(os.getenv("BOT_TOKEN"))
+    token = os.getenv("BOT_TOKEN")
 
-if __name__ == "__main__" :
-    asyncio.run(main())
+    if not token:
+        print("❌ 오류: BOT_TOKEN이 .env 파일에 설정되지 않았습니다.")
+        return
+
+    async with bot:
+        try:
+            await bot.start(token)
+        except discord.LoginFailure:
+            print("❌ 오류: 토큰이 유효하지 않습니다. 다시 확인해 주세요.")
+        except Exception as e:
+            print(f"❌ 실행 중 오류 발생: {e}")
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

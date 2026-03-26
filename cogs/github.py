@@ -19,34 +19,54 @@ class Github(commands.Cog) :
             },
         }
 
-    async def send_github(self, ctx, name) : 
+    async def send_github_embed(self, ctx: commands.Context, name: str): 
         data = self.github_data[name]
-        embed = discord.Embed(title = f"{data['title']}", description = f"{data['description']}", color = data['color'])
-        embed.add_field(name="👤 GitHub ID", value=f"`{name}`", inline=False)
-        embed.add_field(name="🔗 Link", value=f"[저장소 방문하기](https://github.com/{name})", inline=False)
-        await ctx.send(embed = embed)
-
-    @commands.command(name = "github", aliases = ["깃허브"])
-    async def github_search(self, ctx, *, search_text: str = None):
-        prefix = self.bot.command_prefix
-        if isinstance(prefix, list): 
-            prefix = prefix[0]
         
+        embed = discord.Embed(
+            title=data['title'], 
+            description=data['description'], 
+            color=data['color']
+        )
+        embed.add_field(name="👤 GitHub ID", value=f"`{name}`", inline=True)
+        embed.add_field(name="🔗 Link", value=f"[저장소 방문하기](https://github.com/{name})", inline=True)
+
+        embed.set_thumbnail(url="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")
+        embed.set_footer(
+            text=f"요청자: {ctx.author.display_name}", 
+            icon_url=ctx.author.display_avatar.url
+        )
+        
+        await ctx.send(embed=embed)
+
+    @commands.command(name="github", aliases=["깃허브", "ㄱㅎㅂ"])
+    async def github_search(self, ctx: commands.Context, *, search_text: str = None):
+        prefix = ctx.prefix
+        
+
         if search_text is None:
-            return await ctx.send(f"❓ 사용법: `{prefix}github 2358006` or `{prefix}github 펭귄진`")
+            embed = discord.Embed(
+                description=f"❓ **사용법:** `{prefix}github [키워드]`\n예: `{prefix}github 과제` 또는 `{prefix}github 펭귄진`",
+                color=0x95A5A6
+            )
+            return await ctx.send(embed=embed)
         
         target_name = None
+
         clean_text = search_text.lower().replace(" ", "")
 
-        for key, info in self.github_data.items() :
-            if clean_text == key or clean_text in info["aliases"] :
+        for key, info in self.github_data.items():
+            if clean_text == key.lower() or clean_text in info["aliases"]:
                 target_name = key
                 break
 
-        if target_name :
-            await self.send_github(ctx, target_name)
+        if target_name:
+            await self.send_github_embed(ctx, target_name)
         else:
-            await ctx.send(f"🔍 '{search_text}'에 해당하는 정보를 찾을 수 없습니다.")
+            embed = discord.Embed(
+                description=f"🔍 '{search_text}'에 해당하는 정보를 찾을 수 없습니다.",
+                color=0xE74C3C
+            )
+            await ctx.send(embed=embed)
 
-async def setup(bot) :
+async def setup(bot: commands.Bot):
     await bot.add_cog(Github(bot))

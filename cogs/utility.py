@@ -20,17 +20,15 @@ class Utility(commands.Cog):
             "야식": ["라면 🍜", "족발 🐷", "보쌈 🍖", "닭발 🐾", "떡볶이 🍡", "튀김 🍤"]
         }
 
-    # 제시된 것중에 하나 선택
-    @commands.command(name="choose")
-    async def choose(self, ctx, *options): 
-        # [동적 prefix 적용]
+    @commands.command(name="choose", aliases=["선택", "골라줘"])
+    async def choose(self, ctx: commands.Context, *options: str): 
         prefix = ctx.prefix
         
         if len(options) < 2:
             embed = discord.Embed(
-                title="❓ 선택지가 부족해요!",
-                description=f"최소 2개 이상의 선택지를 입력해 주세요.\n예: `{prefix}choose 짜장면 짬뽕 탕수육`",
-                color=0xFF5555
+                title="❓ 선택지가 부족함",
+                description=f"최소 2개 이상의 선택지를 입력합시다.\n 예: `{prefix}choose 짜장면 짬뽕 탕수육`",
+                color=0xE74C3C 
             )
             return await ctx.send(embed=embed)
 
@@ -38,37 +36,38 @@ class Utility(commands.Cog):
         
         embed = discord.Embed(
             title="🤔 제 선택은요...",
-            description=f"작성하신 {len(options)}개의 선택지 중에서 골라봤어요!",
-            color=0x3498DB
+            description=f"작성하신 **{len(options)}개**의 선택지 중에서 골라봤어요!",
+            color=0x3498DB  # 시스템 정보 색상
         )
         embed.add_field(name="📋 후보 목록", value=f"`{'`, `'.join(options)}`", inline=False)
         embed.add_field(name="✨ 최종 결정", value=f"🎉 **{select}**", inline=False)
-        embed.set_footer(text=f"요청자: {ctx.author.display_name}", icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(
+            text=f"요청자: {ctx.author.display_name}", 
+            icon_url=ctx.author.display_avatar.url
+        )
         await ctx.send(embed=embed)
 
-    # 메뉴 추천
     @commands.command(name="menu", aliases=["메뉴", "메뉴추천", "뭐먹지", "머먹지"])
-    async def recommend_menu(self, ctx, category: str = None):
-        # [동적 prefix 적용]
+    async def recommend_menu(self, ctx: commands.Context, category: str = None):
         prefix = ctx.prefix
         target_list = None
         display_category = ""
 
-        # 시간대 데이터 확인
         if category in self.time_data:
             target_list = self.time_data[category]
             display_category = category
-        # 카테고리 데이터 확인
+
         elif category in self.menu_list:
             target_list = self.menu_list[category]
             display_category = category
 
-        # 카테고리가 없거나 입력되지 않은 경우 전체에서 랜덤
         if not target_list:
             combined_menus = []
-            for m in self.menu_list.values(): combined_menus.extend(m)
-            for t in self.time_data.values(): combined_menus.extend(t)
-            
+            for m in self.menu_list.values():
+                combined_menus.extend(m)
+            for t in self.time_data.values():
+                combined_menus.extend(t)
+
             target_list = list(set(combined_menus))
             display_category = "전체 메뉴"
 
@@ -77,8 +76,12 @@ class Utility(commands.Cog):
         embed = discord.Embed(
             title="🍴 메뉴 추천 시스템",
             description=f"{ctx.author.mention}님, **{display_category}** 카테고리에서 골라봤어요!",
-            color=0xF1C40F
+            color=0xF1C40F 
         )
         embed.add_field(name="오늘의 추천", value=f"✨ **{food}**", inline=False)
-        # [푸터의 팁 부분에 동적 prefix 적용]
         embed.set_footer(text=f"팁: {prefix}뭐먹지 [아침/점심/한식/중식/일식 등]을 입력해 보세요!")
+        
+        await ctx.send(embed=embed)
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Utility(bot))
