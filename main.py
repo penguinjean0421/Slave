@@ -49,7 +49,7 @@ class Slave(commands.Bot):
         print(f"🔢 접두사: {', '.join(self.command_prefix)}")
         print("-" * 30)
 
-        await self.change_presence(activity=discord.Game("Noot Noot 🐧"))
+        await self.change_presence()
 
 async def main():
     bot = Slave()

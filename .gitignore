@@ -4,5 +4,8 @@
 # Sever Channel
 config.json
 
+# Game Tracking
+tracking.json
+
 # mac OS
 .DS_Store
