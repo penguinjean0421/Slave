@@ -1,10 +1,11 @@
-import discord
-from discord.ext import commands
-from datetime import datetime, timedelta
 import asyncio
 import json
 import os
 import re
+from datetime import datetime, timedelta
+
+import discord
+from discord.ext import commands
 
 class System(commands.Cog):
     def __init__(self, bot):
@@ -31,13 +32,13 @@ class System(commands.Cog):
     def get_server_data(self, guild):
         gid = str(guild.id)
         owner_name = str(guild.owner) if guild.owner else "알 수 없음"
-        
+
         if gid not in self.server_configs:
             self.server_configs[gid] = {
                 "server_name": guild.name,
                 "owner_id": guild.owner_id,
                 "owner_name": owner_name,
-                "log_channel_id": None, 
+                "log_channel_id": None,
                 "punish_log_channel_id": None,
                 "command_channel_id": None,
             }
@@ -45,17 +46,17 @@ class System(commands.Cog):
             self.server_configs[gid]["server_name"] = guild.name
             self.server_configs[gid]["owner_name"] = owner_name
             self.server_configs[gid]["owner_id"] = guild.owner_id
-        
+
         self.save_config()
         return self.server_configs[gid]
 
     def get_log_channel(self, guild):
-        data = self.get_server_data(guild) 
+        data = self.get_server_data(guild)
         log_id = data.get("log_channel_id")
         return self.bot.get_channel(log_id) if log_id else guild.system_channel
 
     def get_punish_channel(self, guild):
-        data = self.get_server_data(guild) 
+        data = self.get_server_data(guild)
         p_id = data.get("punish_log_channel_id") or data.get("log_channel_id")
         return self.bot.get_channel(p_id) if p_id else guild.system_channel
 
@@ -74,21 +75,25 @@ class System(commands.Cog):
             await log_channel.send(embed=embed)
 
     async def cog_check(self, ctx):
-        if not ctx.guild: return False
+        if not ctx.guild:
+            return False
         data = self.get_server_data(ctx.guild)
         cmd_id = data.get("command_channel_id")
         if cmd_id and ctx.channel.id != cmd_id:
             return ctx.author.guild_permissions.administrator
         return True
-    
+
     def parse_time(self, time_str: str):
-        if not time_str: return None
-        if time_str.isdigit(): return int(time_str)
+        if not time_str:
+            return None
+        if time_str.isdigit():
+            return int(time_str)
         match = re.match(r"(\d+)([smhd])", time_str.lower())
-        if not match: return None
+        if not match:
+            return None
         amount, unit = int(match.group(1)), match.group(2)
         return amount * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[unit]
-    
+
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
         if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
@@ -98,20 +103,29 @@ class System(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        embed = discord.Embed(title="📥 멤버 입장", description=f"{member.mention} **{member}** 님이 입장했습니다.", color=0x2ECC71)
+        embed = discord.Embed(
+            title="📥 멤버 입장",
+            description=f"{member.mention} **{member}** 님이 입장했습니다.",
+            color=0x2ECC71
+        )
         embed.set_thumbnail(url=member.display_avatar.url)
         embed.set_footer(text=f"ID: {member.id} | 총 멤버: {member.guild.member_count}명")
         await self.send_to_log(member.guild, embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        embed = discord.Embed(title="📤 멤버 퇴장", description=f"**{member}** 님이 서버를 떠났습니다.", color=0xE74C3C)
+        embed = discord.Embed(
+            title="📤 멤버 퇴장",
+            description=f"**{member}** 님이 서버를 떠났습니다.",
+            color=0xE74C3C
+        )
         embed.set_footer(text=f"ID: {member.id} | 남은 멤버: {member.guild.member_count}명")
         await self.send_to_log(member.guild, embed)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if before.author.bot or before.content == after.content: return
+        if before.author.bot or before.content == after.content:
+            return
         embed = discord.Embed(title="📝 메시지 수정됨", url=after.jump_url, color=0xF39C12)
         embed.set_author(name=f"{before.author}", icon_url=before.author.display_avatar.url)
         embed.add_field(name="수정 전", value=f"```{before.content or '내용 없음'}```", inline=False)
@@ -120,14 +134,20 @@ class System(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        if message.author.bot or not message.guild: return
+        if message.author.bot or not message.guild:
+            return
         embed = discord.Embed(title="🗑️ 메시지 삭제됨", color=0x34495E)
-        embed.description = f"**작성자:** {message.author.mention}\n**채널:** {message.channel.mention}\n**내용:** ```{message.content or '내용 없음'}```"
+        embed.description = (
+            f"**작성자:** {message.author.mention}\n"
+            f"**채널:** {message.channel.mention}\n"
+            f"**내용:** ```{message.content or '내용 없음'}```"
+        )
         await self.send_to_log(message.guild, embed)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if before.channel == after.channel: return
+        if before.channel == after.channel:
+            return
         user_info = f"{member.mention} **({member.id})**"
         if not before.channel:
             desc, color = f"🔊 {user_info} 님이 **{after.channel.name}** 입장", 0x3498DB
@@ -142,159 +162,237 @@ class System(commands.Cog):
     @commands.command(name="set")
     @commands.has_permissions(administrator=True)
     async def set_command(self, ctx, target: str = None, channel: discord.TextChannel = None):
-        key_map = {"log": "log_channel_id", "bot": "command_channel_id", "punish": "punish_log_channel_id"}
-        
+        key_map = {
+            "log": "log_channel_id",
+            "bot": "command_channel_id",
+            "punish": "punish_log_channel_id"
+        }
+
         if not target or target.lower() not in key_map:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}set [log/punish/bot] [#채널]`", color=0x95A5A6)
+            embed = discord.Embed(
+                description=f"❓ 사용법: `{ctx.prefix}set [log/punish/bot] [#채널]`",
+                color=0x95A5A6
+            )
             return await ctx.send(embed=embed)
-        
+
         target = target.lower()
         target_channel = channel or ctx.channel
         gid = str(ctx.guild.id)
-        
+
         self.get_server_data(ctx.guild)
         self.server_configs[gid][key_map[target]] = target_channel.id
         self.save_config()
 
-        embed = discord.Embed(description=f"✅ **{target.upper()}** 채널이 {target_channel.mention}로 설정되었습니다.", color=0x3498DB)
+        embed = discord.Embed(
+            description=f"✅ **{target.upper()}** 채널이 {target_channel.mention}로 설정되었습니다.",
+            color=0x3498DB
+        )
         await ctx.send(embed=embed)
 
-    @commands.command(name="reset", aliases=["초기화"])
+    @commands.command(name="reset")
     @commands.has_permissions(administrator=True)
     async def reset_command(self, ctx, target: str = None):
         gid = str(ctx.guild.id)
-        key_map = {"log": "log_channel_id", "bot": "command_channel_id", "punish": "punish_log_channel_id"}
-        
+        key_map = {
+            "log": "log_channel_id",
+            "bot": "command_channel_id",
+            "punish": "punish_log_channel_id"
+        }
+
         if target == "all":
             self.server_configs.pop(gid, None)
             embed = discord.Embed(description="✅ 모든 설정이 초기화되었습니다.", color=0xE67E22)
         elif target in key_map:
             self.server_configs[gid][key_map[target]] = None
-            embed = discord.Embed(description=f"✅ **{target.upper()}** 채널 설정이 해제되었습니다.", color=0x95A5A6)
+            embed = discord.Embed(
+                description=f"✅ **{target.upper()}** 채널 설정이 해제되었습니다.",
+                color=0x95A5A6
+            )
         else:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}reset [log/punish/bot/all]`", color=0x95A5A6)
-    
+            embed = discord.Embed(
+                description=f"❓ 사용법: `{ctx.prefix}reset [log/punish/bot/all]`",
+                color=0x95A5A6
+            )
+
         self.save_config()
         await ctx.send(embed=embed)
 
-    # --- 제제 명령어 --- 
+    # --- 제제 명령어 ---
 
-    @commands.command(name="mute", aliases=["뮤트"])
+    @commands.command(name="mute")
     @commands.has_permissions(administrator=True)
     async def server_mute(self, ctx, member: discord.Member = None, time: str = None):
-        if not member or not member.voice: 
+        if not member or not member.voice:
             embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
             return await ctx.send(embed=embed)
-            
+
         seconds = self.parse_time(time)
         await member.edit(mute=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
-        
+
         embed = discord.Embed(description=f"🔇 {member.mention} 마이크 차단 ({time or '무기한'})", color=0xE74C3C)
         await ctx.send(embed=embed)
         await self.send_punish_log(ctx.guild, embed)
-        
+
         if seconds:
             await asyncio.sleep(seconds)
             if member.voice:
                 await member.edit(mute=False)
-                await self.send_punish_log(ctx.guild, discord.Embed(description=f"🔊 {member.mention} 뮤트 해제 (시간 종료)", color=0x2ECC71))
+                unmute_embed = discord.Embed(
+                    description=f"🔊 {member.mention} 뮤트 해제 (시간 종료)",
+                    color=0x2ECC71
+                )
+                await self.send_punish_log(ctx.guild, unmute_embed)
 
-    @commands.command(name="unmute", aliases=["뮤트해제"])
+    @commands.command(name="unmute")
     @commands.has_permissions(administrator=True)
     async def server_unmute(self, ctx, member: discord.Member = None):
-        if not member or not member.voice: 
+        if not member or not member.voice:
             embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
             return await ctx.send(embed=embed)
-            
+
         await member.edit(mute=False)
         embed = discord.Embed(description=f"🔊 {member.mention} 마이크 차단 해제", color=0x2ECC71)
         await ctx.send(embed=embed)
         await self.send_punish_log(ctx.guild, embed)
 
-    @commands.command(name="vckick", aliases=["음성강퇴"])
-    @commands.has_permissions(administrator=True)    
-    async def server_vckick(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member or not member.voice: 
-            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+    @commands.command(name="deafen")
+    @commands.has_permissions(administrator=True)
+    async def server_deafen(self, ctx, member: discord.Member = None, time: str = None):
+        if not member or not member.voice:
+            embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
             return await ctx.send(embed=embed)
-            
-        await member.move_to(None, reason=f"실행자: {ctx.author}")
-        embed = discord.Embed(title="👟 음성 강제 퇴장", description=f"{member.mention} 퇴장됨\n사유: {reason}", color=0xF1C40F)
+
+        seconds = self.parse_time(time)
+        await member.edit(deafen=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
+
+        embed = discord.Embed(description=f"🔇 {member.mention} 헤드셋 차단 ({time or '무기한'})", color=0xE74C3C)
         await ctx.send(embed=embed)
         await self.send_punish_log(ctx.guild, embed)
 
-    @commands.command(name="timeout", aliases=["타임아웃"])
-    @commands.has_permissions(administrator=True)    
+        if seconds:
+            await asyncio.sleep(seconds)
+            if member.voice:
+                await member.edit(deafen=False)
+                log_embed = discord.Embed(
+                    description=f"🔊 {member.mention} 헤드셋 차단 해제 (시간 종료)",
+                    color=0x2ECC71
+                )
+                await self.send_punish_log(ctx.guild, log_embed)
+
+    @commands.command(name="undeafen")
+    @commands.has_permissions(administrator=True)
+    async def server_undeafen(self, ctx, member: discord.Member = None):
+        if not member or not member.voice:
+            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+            return await ctx.send(embed=embed)
+
+        await member.edit(deafen=False)
+        embed = discord.Embed(description=f"🔊 {member.mention} 헤드셋 차단 해제", color=0x2ECC71)
+        await ctx.send(embed=embed)
+        await self.send_punish_log(ctx.guild, embed)
+
+    @commands.command(name="vckick")
+    @commands.has_permissions(administrator=True)
+    async def server_vckick(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
+        if not member or not member.voice:
+            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+            return await ctx.send(embed=embed)
+
+        await member.move_to(None, reason=f"실행자: {ctx.author}")
+        embed = discord.Embed(
+            title="👟 음성 강제 퇴장",
+            description=f"{member.mention} 퇴장됨\n사유: {reason}",
+            color=0xF1C40F
+        )
+        await ctx.send(embed=embed)
+        await self.send_punish_log(ctx.guild, embed)
+
+    @commands.command(name="timeout")
+    @commands.has_permissions(administrator=True)
     async def server_timeout(self, ctx, member: discord.Member = None, time: str = None, *, reason="사유 없음"):
         seconds = self.parse_time(time)
-        
-        if not member or not seconds: 
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}timeout @유저 [시간] [사유]`\n예: `{ctx.prefix}timeout @유저 10m 도배`", color=0x95A5A6)
+
+        if not member or not seconds:
+            embed = discord.Embed(
+                description=f"❓ 사용법: `{ctx.prefix}timeout @유저 [시간] [사유]`\n"
+                            f"예: `{ctx.prefix}timeout @유저 10m 도배`",
+                color=0x95A5A6
+            )
             return await ctx.send(embed=embed)
-            
+
         try:
             await member.timeout(timedelta(seconds=seconds), reason=f"실행자: {ctx.author} | {reason}")
-            embed = discord.Embed(title="⏳ 타임아웃", description=f"{member.mention} ({time})\n사유: {reason}", color=0xF39C12)
+            embed = discord.Embed(
+                title="⏳ 타임아웃",
+                description=f"{member.mention} ({time})\n사유: {reason}",
+                color=0xF39C12
+            )
             await ctx.send(embed=embed)
             await self.send_punish_log(ctx.guild, embed)
         except Exception as e:
             await ctx.send(embed=discord.Embed(description=f"❌ 오류: {e}", color=0xE74C3C))
 
-    @commands.command(name="untimeout", aliases=["타임아웃해제", "언타임아웃"])
-    @commands.has_permissions(administrator=True)    
+    @commands.command(name="untimeout")
+    @commands.has_permissions(administrator=True)
     async def server_untimeout(self, ctx, member: discord.Member = None, *, reason="관리자에 의한 해제"):
-        if not member: 
+        if not member:
             embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}untimeout @유저`", color=0x95A5A6)
             return await ctx.send(embed=embed)
-            
+
         if not member.timed_out_until:
             embed = discord.Embed(description=f"❌ {member.mention} 님은 현재 타임아웃 상태가 아닙니다.", color=0xE74C3C)
             return await ctx.send(embed=embed)
-            
+
         try:
             await member.timeout(None, reason=f"실행자: {ctx.author} | {reason}")
-            embed = discord.Embed(title="✅ 타임아웃 해제", description=f"{member.mention} 님의 타임아웃이 해제되었습니다.", color=0x2ECC71)
+            embed = discord.Embed(
+                title="✅ 타임아웃 해제",
+                description=f"{member.mention} 님의 타임아웃이 해제되었습니다.",
+                color=0x2ECC71
+            )
             await ctx.send(embed=embed)
             await self.send_punish_log(ctx.guild, embed)
         except Exception as e:
             await ctx.send(embed=discord.Embed(description=f"❌ 오류 발생: {e}", color=0xE74C3C))
 
-    @commands.command(name="kick", aliases=["추방"])
+    @commands.command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def server_kick(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member: return
+        if not member:
+            return
         await member.kick(reason=f"실행자: {ctx.author} | {reason}")
         embed = discord.Embed(title="👞 추방 완료", description=f"{member.mention} 추방됨\n사유: {reason}", color=0xE67E22)
         await ctx.send(embed=embed)
         await self.send_punish_log(ctx.guild, embed)
 
-    @commands.command(name="ban", aliases=["차단"])
+    @commands.command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def server_ban(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member: 
+        if not member:
             embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}ban [유저멘션/ID] [사유]`", color=0x95A5A6)
             return await ctx.send(embed=embed)
-            
+
         await member.ban(reason=f"실행자: {ctx.author} | {reason}", delete_message_seconds=86400)
         embed = discord.Embed(title="🚫 차단 완료", description=f"{member.mention} 차단됨\n사유: {reason}", color=0xC0392B)
         await ctx.send(embed=embed)
         await self.send_punish_log(ctx.guild, embed)
 
-    @commands.command(name="unban", aliases=["차단해제"])
+    @commands.command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def server_unban(self, ctx, *, user_spec: str = None):
-        if not user_spec: 
+        if not user_spec:
             embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}unban [이름#태그] 또는 [ID]`", color=0x95A5A6)
-            return await ctx.send(embed=embed) 
-            
+            return await ctx.send(embed=embed)
+
         async for entry in ctx.guild.bans():
             if user_spec in [str(entry.user.id), str(entry.user)]:
                 await ctx.guild.unban(entry.user)
                 embed = discord.Embed(title="✅ 차단 해제", description=f"{entry.user} 해제됨", color=0x2ECC71)
                 await ctx.send(embed=embed)
                 return await self.send_punish_log(ctx.guild, embed)
-                
+
         await ctx.send(embed=discord.Embed(description="❌ 차단 목록에서 찾을 수 없습니다.", color=0xE74C3C))
+
 
 async def setup(bot):
     await bot.add_cog(System(bot))
