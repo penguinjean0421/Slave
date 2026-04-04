@@ -39,7 +39,7 @@ class Information(commands.Cog) :
         embed.add_field(name="🆔 접두사(Prefix)", value=f"`{prefix}`", inline=False)
         embed.add_field(name="📖 도움말 명령어", value=f"`{prefix}help` / `{prefix}help 관리자`", inline=True)
         embed.add_field(name="✨ 유틸리티", value=f"`{prefix}choose`, `{prefix}menu`", inline=True)
-        embed.add_field(name="🎮 게임 전적 조회", value=f"`{prefix}lol 국가 닉네임#태그`\n `{prefix}pubg 닉네임`", inline=True)
+        embed.add_field(name="🎮 게임 전적 조회", value=f"`{prefix}lol 국가 닉네임#태그`\n `{prefix}pubg 플랫폼 닉네임`", inline=True)
         embed.add_field(name="⚙️ 서버 관리", value=f"상세 명령어는 `{prefix}help 관리자`를 참고하세요.", inline=False)
         embed.add_field(name="📚 과제도움", value=f"`{prefix}github 과제`", inline=False)        
         embed.add_field(name="💻 소스보기", value=f"[`GitHub Repository`](https://github.com/{self.credit_data['credit']['developer']}/{data['name']})", inline=False)
