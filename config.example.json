@@ -5,6 +5,9 @@
         "owner_name": "서버장_이름",
         "log_channel_id": null,
         "punish_log_channel_id": null,
-        "command_channel_id": null
+        "command_channel_id": null,
+        "ticket_panel_channel_id": null,
+        "ticket_panel_msg_id": null,
+        "ticket_counter": 0
     }
 }

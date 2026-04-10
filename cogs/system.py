@@ -7,7 +7,12 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
+
 class System(commands.Cog):
+    """
+    서버 설정 관리 및 로그 시스템을 담당하는 메인 Cog입니다.
+    """
+
     def __init__(self, bot):
         self.bot = bot
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -16,51 +21,65 @@ class System(commands.Cog):
         self.load_config()
 
     def load_config(self):
+        """설정 파일(JSON)을 로드합니다."""
         if os.path.exists(self.config_file):
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     self.server_configs = json.load(f)
-            except Exception:
+            except (json.JSONDecodeError, IOError):
                 self.server_configs = {}
         else:
             self.server_configs = {}
 
     def save_config(self):
-        with open(self.config_file, 'w', encoding='utf-8') as f:
-            json.dump(self.server_configs, f, indent=4, ensure_ascii=False)
+        """현재 설정을 파일에 저장합니다."""
+        try:
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.server_configs, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"파일 저장 중 오류 발생: {e}")
 
     def get_server_data(self, guild):
+        """서버별 데이터 구조를 반환하며, 없을 경우 초기화합니다."""
         gid = str(guild.id)
-        owner_name = str(guild.owner) if guild.owner else "알 수 없음"
 
         if gid not in self.server_configs:
             self.server_configs[gid] = {
                 "server_name": guild.name,
                 "owner_id": guild.owner_id,
-                "owner_name": owner_name,
+                "owner_name": str(guild.owner),
                 "log_channel_id": None,
                 "punish_log_channel_id": None,
                 "command_channel_id": None,
+                "ticket_panel_channel_id": None,
+                "ticket_panel_msg_id": None,
+                "ticket_count": 0
             }
         else:
+            # 필수 키 누락 대비 기본값 채워넣기
+            keys = ["ticket_panel_channel_id", "ticket_panel_msg_id", "ticket_count"]
+            for key in keys:
+                if key not in self.server_configs[gid]:
+                    self.server_configs[gid][key] = 0 if "count" in key else None
             self.server_configs[gid]["server_name"] = guild.name
-            self.server_configs[gid]["owner_name"] = owner_name
-            self.server_configs[gid]["owner_id"] = guild.owner_id
 
         self.save_config()
         return self.server_configs[gid]
 
     def get_log_channel(self, guild):
+        """설정된 로그 채널을 반환합니다."""
         data = self.get_server_data(guild)
         log_id = data.get("log_channel_id")
         return self.bot.get_channel(log_id) if log_id else guild.system_channel
 
     def get_punish_channel(self, guild):
+        """설정된 처벌 로그 채널을 반환합니다."""
         data = self.get_server_data(guild)
         p_id = data.get("punish_log_channel_id") or data.get("log_channel_id")
         return self.bot.get_channel(p_id) if p_id else guild.system_channel
 
     async def send_to_log(self, guild, embed):
+        """일반 로그 채널에 메시지를 전송합니다."""
         log_channel = self.get_log_channel(guild)
         if log_channel and log_channel.permissions_for(guild.me).send_messages:
             if not embed.timestamp:
@@ -68,6 +87,7 @@ class System(commands.Cog):
             await log_channel.send(embed=embed)
 
     async def send_punish_log(self, guild, embed):
+        """처벌 로그 채널에 메시지를 전송합니다."""
         log_channel = self.get_punish_channel(guild)
         if log_channel and log_channel.permissions_for(guild.me).send_messages:
             if not embed.timestamp:
@@ -75,6 +95,7 @@ class System(commands.Cog):
             await log_channel.send(embed=embed)
 
     async def cog_check(self, ctx):
+        """명령어 실행 전 채널 및 권한을 확인합니다."""
         if not ctx.guild:
             return False
         data = self.get_server_data(ctx.guild)
@@ -84,6 +105,7 @@ class System(commands.Cog):
         return True
 
     def parse_time(self, time_str: str):
+        """시간 문자열(s, m, h, d)을 초 단위 정수로 변환합니다."""
         if not time_str:
             return None
         if time_str.isdigit():
@@ -92,10 +114,12 @@ class System(commands.Cog):
         if not match:
             return None
         amount, unit = int(match.group(1)), match.group(2)
-        return amount * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[unit]
+        unit_map = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
+        return amount * unit_map[unit]
 
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
+        """명령어 성공 시 메시지를 자동 삭제합니다."""
         if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
 
@@ -162,15 +186,17 @@ class System(commands.Cog):
     @commands.command(name="set")
     @commands.has_permissions(administrator=True)
     async def set_command(self, ctx, target: str = None, channel: discord.TextChannel = None):
+        """서버의 각종 로그 및 티켓 채널을 설정합니다."""
         key_map = {
             "log": "log_channel_id",
             "bot": "command_channel_id",
-            "punish": "punish_log_channel_id"
+            "punish": "punish_log_channel_id",
+            "ticket": "ticket_panel_channel_id"
         }
 
         if not target or target.lower() not in key_map:
             embed = discord.Embed(
-                description=f"❓ 사용법: `{ctx.prefix}set [log/punish/bot] [#채널]`",
+                description=f"❓ 사용법: `{ctx.prefix}set [log/punish/bot/ticket] [#채널]`",
                 color=0x95A5A6
             )
             return await ctx.send(embed=embed)
@@ -178,46 +204,102 @@ class System(commands.Cog):
         target = target.lower()
         target_channel = channel or ctx.channel
         gid = str(ctx.guild.id)
-
         self.get_server_data(ctx.guild)
-        self.server_configs[gid][key_map[target]] = target_channel.id
-        self.save_config()
 
+        self.server_configs[gid][key_map[target]] = target_channel.id
         embed = discord.Embed(
             description=f"✅ **{target.upper()}** 채널이 {target_channel.mention}로 설정되었습니다.",
             color=0x3498DB
         )
+
+        if target == "ticket":
+            ticket_cog = self.bot.get_cog('Ticket')
+            if ticket_cog:
+                panel_msg = await ticket_cog.send_ticket_panel(target_channel)
+                if panel_msg:
+                    self.server_configs[gid]["ticket_panel_channel_id"] = target_channel.id
+                    self.server_configs[gid]["ticket_panel_msg_id"] = panel_msg.id
+                    embed = discord.Embed(
+                        description=f"✅ 티켓 패널이 {target_channel.mention}에 생성되었습니다.\n(ID: {panel_msg.id})",
+                        color=0x3498DB
+                    )
+                else:
+                    embed = discord.Embed(description="❌ 티켓 메시지 생성에 실패했습니다.", color=0xE74C3C)
+                    return await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(description="❌ Ticket Cog가 로드되지 않았습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
+
+        self.save_config()
         await ctx.send(embed=embed)
 
     @commands.command(name="reset")
     @commands.has_permissions(administrator=True)
     async def reset_command(self, ctx, target: str = None):
+        """서버 설정을 초기화하거나 특정 채널 설정을 제거합니다."""
         gid = str(ctx.guild.id)
         key_map = {
             "log": "log_channel_id",
             "bot": "command_channel_id",
-            "punish": "punish_log_channel_id"
+            "punish": "punish_log_channel_id",
+            "ticket": "ticket_panel_channel_id"
         }
 
         if target == "all":
+            await self.delete_ticket_panel(ctx.guild)
             self.server_configs.pop(gid, None)
             embed = discord.Embed(description="✅ 모든 설정이 초기화되었습니다.", color=0xE67E22)
-        elif target in key_map:
-            self.server_configs[gid][key_map[target]] = None
-            embed = discord.Embed(
-                description=f"✅ **{target.upper()}** 채널 설정이 해제되었습니다.",
-                color=0x95A5A6
-            )
+        elif target and target.lower() in key_map:
+            target = target.lower()
+            if target == "ticket":
+                await self.delete_ticket_panel(ctx.guild)
+
+            if gid in self.server_configs:
+                self.server_configs[gid][key_map[target]] = None
+                if target == "ticket":
+                    self.server_configs[gid]["ticket_panel_msg_id"] = None
+                embed = discord.Embed(
+                    description=f"✅ **{target.upper()}** 설정 및 패널이 제거되었습니다.",
+                    color=0x95A5A6
+                )
+            else:
+                embed = discord.Embed(description="❌ 설정된 데이터가 없습니다.", color=0xE74C3C)
         else:
             embed = discord.Embed(
-                description=f"❓ 사용법: `{ctx.prefix}reset [log/punish/bot/all]`",
+                description=f"❓ 사용법: `{ctx.prefix}reset [log/punish/bot/ticket/all]`",
                 color=0x95A5A6
             )
 
         self.save_config()
         await ctx.send(embed=embed)
 
-    # --- 제제 명령어 ---
+    async def delete_ticket_panel(self, guild):
+        """저장된 티켓 패널 메시지를 물리적으로 삭제합니다."""
+        gid = str(guild.id)
+        config = self.server_configs.get(gid)
+        if not config:
+            return
+
+        msg_id = config.get("ticket_panel_msg_id")
+        chn_id = config.get("ticket_panel_channel_id")
+
+        if msg_id and chn_id:
+            channel = self.bot.get_channel(chn_id)
+            if not channel:
+                try:
+                    channel = await self.bot.fetch_channel(chn_id)
+                except Exception:
+                    return
+
+            try:
+                msg = await channel.fetch_message(msg_id)
+                await msg.delete()
+            except discord.NotFound:
+                pass
+            except Exception as e:
+                print(f"패널 삭제 오류: {e}")
+
+    # --- 처벌(Sanction) 명령어 ---
 
     @commands.command(name="mute")
     @commands.has_permissions(administrator=True)
@@ -311,7 +393,6 @@ class System(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def server_timeout(self, ctx, member: discord.Member = None, time: str = None, *, reason="사유 없음"):
         seconds = self.parse_time(time)
-
         if not member or not seconds:
             embed = discord.Embed(
                 description=f"❓ 사용법: `{ctx.prefix}timeout @유저 [시간] [사유]`\n"
