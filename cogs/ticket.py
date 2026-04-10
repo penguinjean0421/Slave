@@ -213,7 +213,6 @@ class Ticket(commands.Cog):
         )
         embed.set_footer(text="관리자")
 
-        await ctx.message.delete()
         await ctx.send(embed=embed)
 
     @commands.Cog.listener()
