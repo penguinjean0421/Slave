@@ -184,7 +184,7 @@ class Ticket(commands.Cog):
         # 닫기 확인 메시지 (주의/경고 - Alizarin)
         embed = discord.Embed(
             description="아래 버튼을 누르면 티켓이 종료되고 관리자 전용 채널로 변경됩니다.",
-             color=0xE74C3C,
+            color=0xE74C3C,
         )
         await ctx.send(embed=embed, view=TicketCloseView(self.bot))
 

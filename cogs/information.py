@@ -9,7 +9,7 @@ class Information(commands.Cog):
                 "name": "Slave",
                 "greeting": "서버에 초대해 주셔서 감사합니다!\n",
                 "summary": "즐거운 서버 활동을 돕기 위한 주요 명령어들을 안내해 드립니다.\n",
-               },
+                },
         }
 
         self.credit_data = {
@@ -92,12 +92,22 @@ class Information(commands.Cog):
         embed.add_field(
             name="⚙️ 시스템 설정",
             value=(
-                f"`{prefix}set [log/punish/bot] [#채널]` : 채널 설정\n"
-                f"`{prefix}reset [log/punish/bot]` : 설정 해제\n"
+                f"`{prefix}set [log/punish/bot/ticket] [#채널]` : 채널 설정\n"
+                f"`{prefix}reset [log/punish/bot/ticket]` : 설정 해제\n"
                 f"`{prefix}reset all` : 모든 설정 초기화"
             ),
             inline=False
         )
+        embed.add_field(
+            name="🎫 티켓 시스템",
+            value=(
+                f"`{prefix}open` : 티켓 열기\n"
+                f"`{prefix}close` : 티켓 닫기 버튼 전송\n"
+                f"`{prefix}answer` : 답변을 임베드로 전송"
+                ), 
+                inline=False,
+        )
+
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(
             text="시간 단위: s(초), m(분), h(시간), d(일) | 예: 10m, 1d",
