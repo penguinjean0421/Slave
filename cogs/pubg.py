@@ -62,7 +62,7 @@ class PUBGStats(commands.Cog):
             data[player_key] = {
                 "nickname": nickname,
                 "platform": platform,
-                "stats": {},
+                "data": {},
                 "timestamp": time.time()
             }
 
@@ -70,7 +70,7 @@ class PUBGStats(commands.Cog):
         if is_ranked:
             mode_type = f"ranked-{mode}"
         else : mode_type = mode
-        data[player_key]["stats"][mode_type] = stats_content
+        data[player_key]["data"][mode_type] = stats_content
         data[player_key]["timestamp"] = time.time() 
 
         # 5. 파일 저장

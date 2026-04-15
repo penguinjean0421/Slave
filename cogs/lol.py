@@ -135,44 +135,65 @@ class LOLStats(commands.Cog):
             cache = {}
         current_time = time.time()
         data = None
+        level = None
+        icon = None
         footer = ""
 
         # 캐시 확인 (25분 이내 데이터인 경우)
         if not force_update and cache_key in cache:
-            if current_time - cache[cache_key]['timestamp'] < 1500:
-                data = cache[cache_key]['data']
+            entry = cache[cache_key]
+            if current_time - entry.get('timestamp', 0) < 1500:
+                data = entry.get('data')
+                level = entry.get('level')
+                icon = entry.get('icon')
                 footer = "캐시 데이터 사용 중"
+
         if data is None:
             async with ctx.typing():
                 try:
                     name, tag = riot_id.rsplit("#", 1)
-                    data = await self.fetch_riot_data(platform, name, tag)
+                    raw_res = await self.fetch_riot_data(platform, name, tag)
+                    if not raw_res: raise Exception("No Data")
+                    
+                    # 데이터 분리 작업
+                    level = raw_res.pop("level")
+                    icon = raw_res.pop("icon")
+                    data = raw_res # solo, flex 정보만 남음
+                    
                 except Exception as e:
-                    print(f"오류: {e}")
-                    data = None
-            if not data:
-                embed = discord.Embed(
-                    description="❌ 소환사를 찾을 수 없습니다. (이름#태그 확인)",
-                    color=0xE74C3C
-                )
-                return await ctx.send(embed=embed)
+                    embed = discord.Embed(
+                        description="❌ 소환사를 찾을 수 없습니다. (이름#태그 확인)",
+                        color=0xE74C3C
+                        )
+                    return await ctx.send(embed=embed)
 
             # 캐시 저장
-            cache[cache_key] = {"timestamp": current_time, "data": data}
+            cache[cache_key] = {
+                "timestamp": current_time,
+                "region": platform,
+                "riotid": riot_id,
+                "level": level,
+                "icon": icon,
+                "data": data
+                }
             with open(self.cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False, indent=4)
             footer = "실시간 데이터 업데이트 완료"
-
+        if level is None or icon is None:
+            embed = discord.Embed(
+                        description="❌ 데이터를 처리하는 중 오류가 발생했습니다.",
+                        color=0xE74C3C
+                        )
+            return await ctx.send(embed=embed)
+        
         # 4. OP.GG용 주소 생성 및 임베드 출력
         opgg_region = re.sub(r'\d+', '', platform)
         encoded_id = quote(riot_id.replace('#', '-'))
         opgg_url = f"https://www.op.gg/summoners/{opgg_region}/{encoded_id}"
 
-        title = f"🎮 [{platform.upper()}] {riot_id} (Lv.{data['level']})"
+        title = f"🎮 [{platform.upper()}] {riot_id} (Lv.{level})"
         embed = discord.Embed(title=title, color=0x1ABC9C)
-        embed.set_thumbnail(
-            url=f"https://ddragon.leagueoflegends.com/cdn/14.6.1/img/profileicon/{data['icon']}.png"
-        )
+        embed.set_thumbnail(url=f"https://ddragon.leagueoflegends.com/cdn/14.6.1/img/profileicon/{icon}.png")
 
         # 솔로 랭크 정보
         s = data['solo']

@@ -1,9 +1,11 @@
 {
     "lol 국가:닉네임#태그": {
         "timestamp": "갱신한 시간",
+        "riotid": "닉네임#태그",
+        "region": "국가",
+        "level": "레벨",
+        "icon": "아이콘 정보",
         "data": {
-            "level": "레벨",
-            "icon": "아이콘 정보",
             "solo": {
                 "tier": "현시즌 솔랭 티어",
                 "lp": "솔랭 Lp",
@@ -19,8 +21,9 @@
         }
     },
     "pubg 플랫폼:닉네임": {
+        "timestamp": "갱신한 시간",
         "nickname": "닉네임",
-        "platform": "steam",
+        "platform": "플랫폼(steam, kakao, psn, xbox)",
         "stats": {
             "squad": {
                 "adr": 148,
@@ -41,8 +44,7 @@
                 "tier": "Survivor",
                 "sub_tier": "1",
                 "point": 4283
-            },
-            "timestamp": 1776094219.719062
+            }
         }
     }
 }
