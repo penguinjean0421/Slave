@@ -36,14 +36,14 @@
                 "point": 0
             },
             "ranked-squad": {
-                "adr": 411,
+                "adr": 582,
                 "kd": 15.0,
-                "win_rate": "70%",
-                "top10": "41.2%",
-                "rounds": 512,
+                "win_rate": "69.4%",
+                "top10": "0.0%",
+                "rounds": 36,
                 "tier": "Survivor",
                 "sub_tier": "1",
-                "point": 4600
+                "point": 4283
             }
         }
     }

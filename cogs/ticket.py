@@ -23,12 +23,15 @@ class TicketCloseView(discord.ui.View):
         except:
             pass 
 
+        # 2. 채널 이름 변경 및 권한 수정
         await channel.edit(name=f"closed-{channel.name}")
 
+        # 모든 멤버(관리자/봇 제외)의 읽기 권한 제거
         for member in channel.members:
             if not member.guild_permissions.administrator and not member.bot:
                 await channel.set_permissions(member, overwrite=None)
 
+        # 3. 종료 알림 전송 (어두운 회색 적용)
         close_embed = discord.Embed(
             description="이 티켓은 종료되었습니다.",
             color=0x2C3E50 
@@ -63,6 +66,7 @@ class Ticket(commands.Cog):
         self.bot.add_view(TicketView(self.bot))
         self.bot.add_view(TicketCloseView(self.bot))
 
+    # --- 공용 티켓 생성 로직 (버튼/명령어 공용) ---
     async def open_ticket_logic(self, guild, user):
         settings_cog = self.bot.get_cog('Settings')
         
@@ -101,6 +105,7 @@ class Ticket(commands.Cog):
         )
         await channel.send(embed=embed)
 
+        # 로그 전송
         if log_channel:
             log_embed = discord.Embed(
                 title="🎫 새 티켓 알림",
@@ -132,6 +137,7 @@ class Ticket(commands.Cog):
                         if not member.guild_permissions.administrator and not member.bot:
                             await channel.set_permissions(member, overwrite=None)
                     
+                    # 자동 종료 알림 (경고 - Alizarin)
                     timeout_embed = discord.Embed(
                         title="⚠️ 자동 종료",
                         description="**5분 동안 대화가 없어 티켓이 자동으로 종료되었습니다.**",
@@ -145,6 +151,7 @@ class Ticket(commands.Cog):
                 continue
 
     async def send_ticket_panel(self, channel: discord.TextChannel):
+        # 티켓 패널 디자인 (시스템 안내 - Concrete)
         embed = discord.Embed(
             title="🎫 고객 지원 센터",
             description="문의 사항이 있으시면 아래 버튼을 눌러 티켓을 열어주세요.",
@@ -157,6 +164,7 @@ class Ticket(commands.Cog):
     async def open_cmd(self, ctx):
         """!open 명령어로 티켓 생성"""
         channel = await self.open_ticket_logic(ctx.guild, ctx.author)
+        # 성공 메시지 (Emerald)
         embed = discord.Embed(
             description=f"✅ 티켓이 생성되었습니다: {channel.mention}",
             color=0x2ECC71
@@ -173,6 +181,7 @@ class Ticket(commands.Cog):
             )
             return await ctx.send(embed=embed, delete_after=5)
 
+        # 닫기 확인 메시지 (주의/경고 - Alizarin)
         embed = discord.Embed(
             description="아래 버튼을 누르면 티켓이 종료되고 관리자 전용 채널로 변경됩니다.",
             color=0xE74C3C,
@@ -187,6 +196,7 @@ class Ticket(commands.Cog):
             embed = discord.Embed(description="❌ 이곳은 티켓 채널이 아닙니다.", color=0xE74C3C)
             return await ctx.send(embed=embed, delete_after=3)
 
+        # 관리자 답변 (성공/진행 - Emerald)
         embed = discord.Embed(
             title="👤 관리자 답변",
             description=content,

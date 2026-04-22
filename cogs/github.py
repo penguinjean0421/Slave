@@ -47,6 +47,7 @@ class Github(commands.Cog):
         prefix = ctx.prefix
 
         if search_text is None:
+            # 중립/시스템 안내 색상 (Concrete)
             embed = discord.Embed(
                 description=(
                     f"❓ **사용법:** `{prefix}github [키워드]`\n"
@@ -67,6 +68,7 @@ class Github(commands.Cog):
         if target_name:
             await self.send_github_embed(ctx, target_name)
         else:
+            # 오류/결과 없음 표준 색상 (Alizarin)
             embed = discord.Embed(
                 description=f"🔍 '{search_text}'에 해당하는 정보를 찾을 수 없습니다.",
                 color=0xE74C3C

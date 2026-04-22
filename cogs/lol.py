@@ -42,6 +42,7 @@ class LOLStats(commands.Cog):
         headers = {"X-Riot-Token": self.api_key}
         async with aiohttp.ClientSession() as session:
 
+            # 1. Account-V1: PUUID 획득
             acc_url = (
                 f"https://{routing}.api.riotgames.com/riot/account/v1/"
                 f"accounts/by-riot-id/{quote(name)}/{quote(tag)}"
@@ -106,6 +107,7 @@ class LOLStats(commands.Cog):
             region_input = region_or_id
             riot_id_raw = args if args else ""
 
+        # 2. 지역 코드 자동 보정
         platform = self.platform_alias.get(region_input.lower(), region_input.lower())
         if platform not in self.region_map:
             valid_list = ", ".join(self.platform_alias.keys())
@@ -115,6 +117,7 @@ class LOLStats(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
+        # 3. 갱신 키워드 체크 및 ID 분리
         force_update = "갱신" in riot_id_raw
         riot_id = riot_id_raw.replace("갱신", "").strip()
         if "#" not in riot_id:
@@ -136,6 +139,7 @@ class LOLStats(commands.Cog):
         icon = None
         footer = ""
 
+        # 캐시 확인 (25분 이내 데이터인 경우)
         if not force_update and cache_key in cache:
             entry = cache[cache_key]
             if current_time - entry.get('timestamp', 0) < 1500:
@@ -150,10 +154,11 @@ class LOLStats(commands.Cog):
                     name, tag = riot_id.rsplit("#", 1)
                     raw_res = await self.fetch_riot_data(platform, name, tag)
                     if not raw_res: raise Exception("No Data")
-
+                    
+                    # 데이터 분리 작업
                     level = raw_res.pop("level")
                     icon = raw_res.pop("icon")
-                    data = raw_res
+                    data = raw_res # solo, flex 정보만 남음
                     
                 except Exception as e:
                     embed = discord.Embed(
@@ -162,6 +167,7 @@ class LOLStats(commands.Cog):
                         )
                     return await ctx.send(embed=embed)
 
+            # 캐시 저장
             cache[cache_key] = {
                 "timestamp": current_time,
                 "region": platform,
@@ -180,6 +186,7 @@ class LOLStats(commands.Cog):
                         )
             return await ctx.send(embed=embed)
         
+        # 4. OP.GG용 주소 생성 및 임베드 출력
         opgg_region = re.sub(r'\d+', '', platform)
         encoded_id = quote(riot_id.replace('#', '-'))
         opgg_url = f"https://www.op.gg/summoners/{opgg_region}/{encoded_id}"
@@ -188,6 +195,7 @@ class LOLStats(commands.Cog):
         embed = discord.Embed(title=title, color=0x1ABC9C)
         embed.set_thumbnail(url=f"https://ddragon.leagueoflegends.com/cdn/14.6.1/img/profileicon/{icon}.png")
 
+        # 솔로 랭크 정보
         s = data['solo']
         s_total = s['w'] + s['l']
         s_wr = round(s['w'] / s_total * 100, 1) if s_total > 0 else 0
@@ -197,6 +205,7 @@ class LOLStats(commands.Cog):
             inline=True
         )
 
+        # 자유 랭크 정보
         f = data['flex']
         f_total = f['w'] + f['l']
         f_wr = round(f['w'] / f_total * 100, 1) if f_total > 0 else 0

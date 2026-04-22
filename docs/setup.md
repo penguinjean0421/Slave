@@ -21,6 +21,7 @@ pip install -r requirements.txt
 # 3. 봇 실행
 python main.py
 ```
+> **💡 Tip**: 더 자세한 환경 변수 설정법은 [DSMB Setup 가이드](https://github.com/penguinjean0421/DSMB)에 정리되어 있습니다.
 
 ## 🔗 관련 문서
 * [**🏠 메인 페이지로 돌아가기 (README.md)**](../README.md)
