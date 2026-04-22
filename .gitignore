@@ -37,6 +37,10 @@ ENV/
 # Discord.py & Bot Logs
 *.log
 
+# Log files
+logs/*
+!.gitkeep
+
 # Sever Channel & Data
 config.json
 tracking.json
