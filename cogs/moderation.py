@@ -35,8 +35,6 @@ class Moderation(commands.Cog):
                 return ctx.author.guild_permissions.administrator
         return True
 
-    # --- 처벌(Sanction) 명령어 ---
-
     @commands.command(name="mute")
     @commands.has_permissions(administrator=True)
     async def server_mute(self, ctx, member: discord.Member = None, time: str = None):
@@ -94,11 +92,11 @@ class Moderation(commands.Cog):
             await asyncio.sleep(seconds)
             if member.voice:
                 await member.edit(deafen=False)
-                log_embed = discord.Embed(
+                embed = discord.Embed(
                     description=f"🔊 {member.mention} 헤드셋 차단 해제 (시간 종료)",
                     color=0x2ECC71
                 )
-                if logger: await logger.send_log(ctx.guild, log_embed, type="punish")
+                if logger: await logger.send_log(ctx.guild, embed, type="punish")
 
     @commands.command(name="undeafen")
     @commands.has_permissions(administrator=True)

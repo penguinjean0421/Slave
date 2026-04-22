@@ -13,11 +13,10 @@ class Utility(commands.Cog):
 
         with open(self.data_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            # Kill 관련 데이터
+
             self.monsters = data['kill_command']['monsters']
             self.death_messages = data['kill_command']['death_messages']
 
-            # 메뉴 관련 데이터
             self.menu_list = data['menu_command']['menu_list']
             self.time_data = data['menu_command']['time_data']
 
@@ -25,7 +24,6 @@ class Utility(commands.Cog):
     async def choose(self, ctx: commands.Context, *options: str):
         prefix = ctx.prefix
         if len(options) < 2:
-            # 경고/오류 표준 색상 (Alizarin)
             embed = discord.Embed(
                 title="❓ 선택지가 부족함",
                 description=f"최소 2개 이상의 선택지를 입력합시다.\n예: `{prefix}choose 짜장면 짬뽕 탕수육`",
@@ -34,7 +32,7 @@ class Utility(commands.Cog):
             return await ctx.send(embed=embed)
             
         select = random.choice(options)
-        # 성공/결과 알림 (Emerald)
+
         embed = discord.Embed(
             title="🤔 제 선택은요...",
             description=f"작성하신 **{len(options)}개**의 선택지 중에서 골라봤어요!",
@@ -91,9 +89,9 @@ class Utility(commands.Cog):
             embed_color = 0xff0000
 
             if member is None or member == ctx.author:
-                attacker_name = f"**{random.choice(self.monsters)}**"
+                attacker_name = f"[**{random.choice(self.monsters)}**]"
             else:
-                attacker_name = f"**{ctx.author.display_name}**"
+                attacker_name = f"[**{ctx.author.display_name}**]"
 
             full_message = chosen_msg.format(attacker=attacker_name)
         else:
@@ -101,7 +99,7 @@ class Utility(commands.Cog):
             full_message = chosen_msg
 
         embed=discord.Embed(
-            description=f"**{target.display_name}**이(가) {full_message}",
+            description=f"[**{target.display_name}**]이(가) {full_message}",
             color=embed_color
         )
         await ctx.send(embed=embed)

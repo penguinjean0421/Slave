@@ -40,12 +40,6 @@ class Slave(commands.Bot):
             except Exception as e:
                 print(f"❌ {cog_name} 로드 실패 -> {e}")
 
-    @commands.Cog.listener()
-    async def on_command_completion(self, ctx):
-        """봇의 모든 명령어 성공 시 유저의 입력 메시지를 자동 삭제합니다."""
-        if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-            await ctx.message.delete()
-
     async def on_ready(self):
         print("-" * 30)
         print(f"🟢 {self.user.name} 온라인!")
@@ -53,6 +47,12 @@ class Slave(commands.Bot):
         print(f"🔢 접두사: {', '.join(self.command_prefix)}")
         print("-" * 30)
         await self.change_presence()
+
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx):
+        """봇의 모든 명령어 성공 시 유저의 입력 메시지를 자동 삭제합니다."""
+        if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            await ctx.message.delete()
 
 async def main():
     bot = Slave()

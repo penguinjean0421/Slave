@@ -46,7 +46,6 @@ class PUBGStats(commands.Cog):
     def save_tracking(self, platform, nickname, stats_content, mode, is_ranked):
         """플랫폼:닉네임 키 안에 모드별 데이터를 누적하여 저장합니다."""
         data = {}
-        # 1. 기존 파일 로드
         if os.path.exists(self.cache_file):
             try:
                 with open(self.cache_file, "r", encoding="utf-8") as f:
@@ -54,10 +53,8 @@ class PUBGStats(commands.Cog):
             except (json.JSONDecodeError, FileNotFoundError):
                 data = {}
 
-        # 2. 유저 식별 키 생성
         player_key = f"pubg {platform}:{nickname}"
 
-        # 3. 해당 유저 데이터가 없으면 초기 틀 생성
         if player_key not in data:
             data[player_key] = {
                 "nickname": nickname,
@@ -66,21 +63,18 @@ class PUBGStats(commands.Cog):
                 "timestamp": time.time()
             }
 
-        # 4. 특정 모드 데이터 업데이트 및 타임스탬프 갱신
         if is_ranked:
             mode_type = f"ranked-{mode}"
         else : mode_type = mode
         data[player_key]["data"][mode_type] = stats_content
         data[player_key]["timestamp"] = time.time() 
 
-        # 5. 파일 저장
         with open(self.cache_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
     async def fetch_pubg_data(self, platform, target_nick, mode, is_ranked):
         """API 호출 및 데이터 계산을 담당하는 로직"""
         async with aiohttp.ClientSession() as session:
-            # 1. 플레이어 ID 조회
             player_url = f"{self.base_url}/{platform}/players?filter[playerNames]={target_nick}"
             async with session.get(player_url, headers=self.headers) as resp:
                 if resp.status != 200:
@@ -88,7 +82,6 @@ class PUBGStats(commands.Cog):
                 player_data = await resp.json()
                 player_id = player_data['data'][0]['id']
 
-            # 2. 전적 URL 설정
             if is_ranked:
                 if not self.current_season:
                     return None, "season_not_loaded"
@@ -101,7 +94,6 @@ class PUBGStats(commands.Cog):
                     return None, "api_error"
                 stats_data = await resp.json()
 
-            # 3. 모드 데이터 추출
             search_mode = mode
             stats_root = stats_data['data']['attributes']
             mode_stats = stats_root['rankedGameModeStats'] if is_ranked else stats_root['gameModeStats']
@@ -110,7 +102,6 @@ class PUBGStats(commands.Cog):
             if not game_stats or game_stats.get('roundsPlayed', 0) == 0:
                 return None, "no_data"
 
-            # 4. 데이터 가공
             rounds = game_stats.get('roundsPlayed', 0)
             wins = game_stats.get('wins', 0)
             kills = game_stats.get('kills', 0)
@@ -151,7 +142,6 @@ class PUBGStats(commands.Cog):
         
         if any(key in potential_mode for key in mode_keywords):
             mode = arg_list.pop(-1).lower()
-            # 경쟁전 입력 시 기본 모드 보정
             if "경쟁" in mode or "ranked" in mode:
                 if mode in ["경쟁", "ranked"]: mode = "squad"
                 else: mode = mode.replace("경쟁", "").replace("ranked", "")
