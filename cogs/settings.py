@@ -48,7 +48,6 @@ class Settings(commands.Cog):
                 "ticket_count": 0
             }
         else:
-            # 필수 키 누락 대비 기본값 채워넣기
             keys = ["ticket_panel_channel_id", "ticket_panel_msg_id", "ticket_count"]
             for key in keys:
                 if key not in self.server_configs[gid]:
@@ -58,7 +57,6 @@ class Settings(commands.Cog):
         self.save_config()
         return self.server_configs[gid]
 
-# 설정 명령어
     @commands.command(name="set")
     @commands.has_permissions(administrator=True)
     async def set_command(self, ctx, target: str = None, channel: discord.TextChannel = None):
@@ -96,7 +94,7 @@ class Settings(commands.Cog):
                     self.server_configs[gid]["ticket_panel_channel_id"] = target_channel.id
                     self.server_configs[gid]["ticket_panel_msg_id"] = panel_msg.id
                     embed = discord.Embed(
-                        description=f"✅ 티켓 패널이 {target_channel.mention}에 생성되었습니다.\n(ID: {panel_msg.id})",
+                        description=f"✅ 티켓 패널이 {target_channel.mention}에 생성되었습니다.",
                         color=0x2ECC71
                     )
                 else:

@@ -21,29 +21,40 @@ class Information(commands.Cog):
             },
         }
 
-    # --- 도움말 관련 메서드 ---
-
     async def send_welcome_help(self, channel: discord.abc.Messageable, name: str, prefix: str = None):
         data = self.help_data.get(name) or self.help_data["welcome"]
         if prefix is None:
             prefix = self.bot.command_prefix
             if isinstance(prefix, list):
                 prefix = prefix[0]
+
         embed = discord.Embed(
             title=f"👋 {data['name']} 입니다.",
             description=f"{data['greeting']}{data['summary']}",
-            color=0x5d2b90
+            color=0x007acc
         )
+
         embed.add_field(name="🆔 접두사(Prefix)", value=f"`{prefix}`", inline=False)
         embed.add_field(
             name="📖 도움말 명령어",
             value=f"`{prefix}help` / `{prefix}help 관리자`",
             inline=True
         )
-        embed.add_field(name="✨ 유틸리티", value=f"`{prefix}choose`, `{prefix}menu`", inline=True)
+        embed.add_field(
+            name="✨ 유틸리티", 
+            value=(
+                f"`{prefix}choose` : 제시된 후보군중 하나를 선택합니다.\n",
+                f"`{prefix}menu` : 메뉴를 추천해줍니다.\n",
+                f"`{prefix}kill` : 랜덤으로 마인크래프트 다잉 메세지를 출력합니다."
+                ),
+            inline=True
+        )
         embed.add_field(
             name="🎮 게임 전적 조회",
-            value=f"`{prefix}lol 국가 닉네임#태그`\n`{prefix}pubg 플랫폼 닉네임`",
+            value=(
+                f"`{prefix}lol 국가 닉네임#태그 : 리그오브레전드 전적을 조회 합니다.`\n",
+                f"`{prefix}pubg 플랫폼 닉네임` : 배틀그라운드 전적을 조회합니다."
+                ),
             inline=True
         )
         embed.add_field(
@@ -51,12 +62,13 @@ class Information(commands.Cog):
             value=f"상세 명령어는 `{prefix}help 관리자`를 참고하세요.",
             inline=False
         )
-        embed.add_field(name="📚 과제도움", value=f"`{prefix}github 과제`", inline=False)
+        embed.add_field(name="📚 과제도움", value=f"`{prefix}github 과제`", inline=True)
         embed.add_field(
             name="💻 소스보기",
             value=f"[`GitHub Repository`](https://github.com/{self.credit_data['credit']['developer']}/{data['name']})",
             inline=False
         )
+
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         embed.set_footer(
             text=f"상세 도움말은 {prefix}help를 입력하세요.",
@@ -68,7 +80,7 @@ class Information(commands.Cog):
         embed = discord.Embed(
             title="🛠️ 서버 관리자 명령어 가이드",
             description="서버 관리 권한이 있는 멤버만 사용 가능한 명령어입니다.",
-            color=0xE74C3C
+            color=0x5d2b90
         )
         embed.add_field(
             name="🔇 음성 제재",
@@ -115,26 +127,6 @@ class Information(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_guild_join(self, guild: discord.Guild):
-        system_cog = self.bot.get_cog('System')
-        channel = None
-        if system_cog:
-            channel = system_cog.get_log_channel(guild)
-        if not channel:
-            channel = guild.system_channel
-        if channel and channel.permissions_for(guild.me).send_messages:
-            await self.send_welcome_help(channel, "welcome")
-
-    @commands.command(name="help", aliases=["도움말", "guide"])
-    async def help_command(self, ctx: commands.Context, category: str = None):
-        admin_keywords = ["관리자", "어드민", "admin", "management", "administrator"]
-        if category and category.lower() in admin_keywords:
-            return await self.send_admin_help(ctx, ctx.prefix)
-        await self.send_welcome_help(ctx.channel, "welcome", ctx.prefix)
-
-    # --- 크레딧 관련 메서드 ---
-
     async def send_credit(self, ctx: commands.Context, name: str):
         data = self.credit_data[name]
         embed = discord.Embed(
@@ -160,12 +152,27 @@ class Information(commands.Cog):
         embed.set_footer(text=f"© 2026 {data['developer']} All rights reserved.")
         await ctx.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        system_cog = self.bot.get_cog('System')
+        channel = None
+        if system_cog:
+            channel = system_cog.get_log_channel(guild)
+        if not channel:
+            channel = guild.system_channel
+        if channel and channel.permissions_for(guild.me).send_messages:
+            await self.send_welcome_help(channel, "welcome")
+
+    @commands.command(name="help", aliases=["도움말", "guide"])
+    async def help_command(self, ctx: commands.Context, category: str = None):
+        admin_keywords = ["관리자", "어드민", "admin", "management", "administrator"]
+        if category and category.lower() in admin_keywords:
+            return await self.send_admin_help(ctx, ctx.prefix)
+        await self.send_welcome_help(ctx.channel, "welcome", ctx.prefix)
+
     @commands.command(name="credit", aliases=["크레딧"])
     async def credit(self, ctx: commands.Context):
         await self.send_credit(ctx, "credit")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Information(bot))
-    
-    
-        # 0x5d2b90 0x007acc
