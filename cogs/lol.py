@@ -40,32 +40,45 @@ class LOLStats(commands.Cog):
     async def fetch_riot_data(self, platform, name, tag):
         routing = self.region_map.get(platform, 'asia')
         headers = {"X-Riot-Token": self.api_key}
-        async with aiohttp.ClientSession() as session:
 
+        async with aiohttp.ClientSession() as session:
             acc_url = (
                 f"https://{routing}.api.riotgames.com/riot/account/v1/"
                 f"accounts/by-riot-id/{quote(name)}/{quote(tag)}"
             )
             async with session.get(acc_url, headers=headers) as resp:
+                if resp.status == 403:
+                    raise Exception("Riot API Key가 만료되었거나 올바르지 않습니다.")
+                if resp.status == 429:
+                    raise Exception("Riot API 요청 제한(Rate Limit)을 초과했습니다.")
                 if resp.status != 200:
                     return None
+
                 acc_data = await resp.json()
                 puuid = acc_data['puuid']
 
-            # 2. Summoner-V4: 아이콘 및 레벨 정보
             sum_url = f"https://{platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
             async with session.get(sum_url, headers=headers) as resp:
+                if resp.status == 403:
+                    raise Exception("Riot API Key가 만료되었거나 올바르지 않습니다.")
+                if resp.status == 429:
+                    raise Exception("Riot API 요청 제한(Rate Limit)을 초과했습니다.")
                 if resp.status != 200:
                     return None
+
                 sum_data = await resp.json()
                 profile_icon = sum_data.get('profileIconId', 1)
                 level = sum_data.get('summonerLevel', 0)
 
-            # 3. League-V4: 랭크 정보
             league_url = f"https://{platform}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
             async with session.get(league_url, headers=headers) as resp:
+                if resp.status == 403:
+                    raise Exception("Riot API Key가 만료되었거나 올바르지 않습니다.")
+                if resp.status == 429:
+                    raise Exception("Riot API 요청 제한(Rate Limit)을 초과했습니다.")
                 if resp.status != 200:
-                    return None
+                    return None 
+                
                 league_data = await resp.json()
 
             res = {
@@ -149,18 +162,18 @@ class LOLStats(commands.Cog):
                 try:
                     name, tag = riot_id.rsplit("#", 1)
                     raw_res = await self.fetch_riot_data(platform, name, tag)
-                    if not raw_res: raise Exception("No Data")
-
+                    if not raw_res: 
+                        embed = discord.Embed(
+                            description="❌ 소환사를 찾을 수 없습니다. (이름#태그 확인)",
+                            color=0xE74C3C
+                        )
+                        return await ctx.send(embed=embed)
+                    
                     level = raw_res.pop("level")
                     icon = raw_res.pop("icon")
                     data = raw_res
-                    
                 except Exception as e:
-                    embed = discord.Embed(
-                        description="❌ 소환사를 찾을 수 없습니다. (이름#태그 확인)",
-                        color=0xE74C3C
-                        )
-                    return await ctx.send(embed=embed)
+                    raise e
 
             cache[cache_key] = {
                 "timestamp": current_time,
@@ -173,6 +186,7 @@ class LOLStats(commands.Cog):
             with open(self.cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False, indent=4)
             footer = "실시간 데이터 업데이트 완료"
+
         if level is None or icon is None:
             embed = discord.Embed(
                         description="❌ 데이터를 처리하는 중 오류가 발생했습니다.",

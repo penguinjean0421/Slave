@@ -7,57 +7,82 @@ from discord.ext import commands
 class Aespa(commands.Cog) :
     def __init__(self, bot) :
         self.bot = bot
-
         base_path = os.path.dirname(os.path.abspath(__file__))
         self.data_file = os.path.join(base_path, "..", "aespa_data.json")
+        self.aespa_data = None
 
-        with open(self.data_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        self.aespa_data=data['aespa_data']
+        self.load_data()
     
+    def load_data(self):
+        """데이터 파일을 로드합니다. 실패 시 에러를 기록합니다."""
+        try:
+            with open(self.data_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            self.aespa_data = data['aespa_data']
+        except Exception as e:
+            print(f"❌ [Aespa Cog] 데이터 로드 실패: {e}")
+
     async def send_aespa(self, ctx):
-        data = self.aespa_data['aespa']
-        embed = discord.Embed(title = f"{data['emoji']} Be my æ, aespa's SNS", color = data['color1'],)
+        try:
+            if not self.aespa_data:
+                return await ctx.send("⚠️ 데이터를 불러올 수 없습니다. 관리자에게 문의하세요.")
 
-        embed.add_field(name = "aespa_exhibition", value = f"[바로가기](https://www.x.com/{data['aespa_exhibition']})", inline = True)
-        embed.add_field(name = "aespa_WEEK", value = f"[바로가기](https://www.x.com/{data['aespa_WEEK']})", inline = True)
-        embed.add_field(name = "BiliBili", value = f"[바로가기](https://space.bilibili.com/{data['bilibili']})", inline = True)
-        embed.add_field(name = "Douyin", value = f"[바로가기](https://v.douyin.com/{data['douyin']})", inline = True)
-        embed.add_field(name = "Facebook", value = f"[바로가기](https://www.facebook.com/{data['facebook']})", inline = True)
-        embed.add_field(name = "Homepage", value = f"[바로가기](https://{data['homepage']}.com)", inline = True)
-        embed.add_field(name = "Instagram", value = f"[바로가기](https://www.instagram.com/{data['instagram']})", inline = True)
-        embed.add_field(name = "Pinterest", value = f"[바로가기](https://pinterest.com/{data['pinterest']})", inline = True)
-        embed.add_field(name = "Snapchat", value = f"[바로가기](https://www.snapchat.com/@{data['snapchat']})", inline = True)
-        embed.add_field(name = "Tiktok", value = f"[바로가기](https://www.tiktok.com/@{data['tiktok']})",inline = True)
-        embed.add_field(name = "Twitter", value = f"[바로가기](https://www.x.com/{data['twitter']})", inline = True)
-        embed.add_field(name = "Twitter JP", value = f"[바로가기](https://www.x.com/{data['jptwitter']})", inline = True)
-        embed.add_field(name = "Weibo", value = f"[바로가기](https://weibo.com/u/{data['weibo']})", inline = True)
-        embed.add_field(name = "Weverse", value = f"[바로가기](https://weverse.io/{data['weverse']}", inline = True)
-        embed.add_field(name = "Xiaohongshu", value = f"[바로가기](https://www.xiaohongshu.com/user/profile/{data['xiaohongshu']})", inline = True)
-        embed.add_field(name = "Youtube", value = f"[바로가기](https://www.youtube.com/@{data['youtube']})", inline = True)
+            data = self.aespa_data['aespa']
+            embed = discord.Embed(
+                title=f"{data.get('emoji', '✨')} Be my æ, aespa's SNS", 
+                color=data.get('color', data.get('color1', 0x000000))
+            )
 
-        await ctx.send(embed = embed)
-
-    async def send_sns(self, ctx, name):
-        data = self.aespa_data[name]
-        embed = discord.Embed(title = f"{data['emoji']} Be my æ, {name}'s SNS", color = data['color'],)
-
-        if(name == "aespa"):
+            embed.add_field(name = "aespa_exhibition", value = f"[바로가기](https://www.x.com/{data['aespa_exhibition']})", inline = True)
+            embed.add_field(name = "aespa_WEEK", value = f"[바로가기](https://www.x.com/{data['aespa_WEEK']})", inline = True)
+            embed.add_field(name = "BiliBili", value = f"[바로가기](https://space.bilibili.com/{data['bilibili']})", inline = True)
+            embed.add_field(name = "Douyin", value = f"[바로가기](https://v.douyin.com/{data['douyin']})", inline = True)
             embed.add_field(name = "Facebook", value = f"[바로가기](https://www.facebook.com/{data['facebook']})", inline = True)
+            embed.add_field(name = "Homepage", value = f"[바로가기](https://{data['homepage']}.com)", inline = True)
             embed.add_field(name = "Instagram", value = f"[바로가기](https://www.instagram.com/{data['instagram']})", inline = True)
+            embed.add_field(name = "Pinterest", value = f"[바로가기](https://pinterest.com/{data['pinterest']})", inline = True)
+            embed.add_field(name = "Snapchat", value = f"[바로가기](https://www.snapchat.com/@{data['snapchat']})", inline = True)
             embed.add_field(name = "Tiktok", value = f"[바로가기](https://www.tiktok.com/@{data['tiktok']})",inline = True)
             embed.add_field(name = "Twitter", value = f"[바로가기](https://www.x.com/{data['twitter']})", inline = True)
-            embed.add_field(name = "Weibo", value = f"[바로가기](https://weibo.com/u/{data['weibo']})", inline = False)            
+            embed.add_field(name = "Twitter JP", value = f"[바로가기](https://www.x.com/{data['jptwitter']})", inline = True)
+            embed.add_field(name = "Weibo", value = f"[바로가기](https://weibo.com/u/{data['weibo']})", inline = True)
+            embed.add_field(name = "Weverse", value = f"[바로가기](https://weverse.io/{data['weverse']}", inline = True)
+            embed.add_field(name = "Xiaohongshu", value = f"[바로가기](https://www.xiaohongshu.com/user/profile/{data['xiaohongshu']})", inline = True)
             embed.add_field(name = "Youtube", value = f"[바로가기](https://www.youtube.com/@{data['youtube']})", inline = True)
 
-        elif name in ["karina", "giselle", "winter"] : 
-            embed.add_field(name = "Instagram", value = f"[바로가기](https://www.instagram.com/{data['instagram']})", inline = False)
+            await ctx.send(embed = embed)
+        except Exception as e:
+            raise e
 
-        elif name == "ningning" :
-            embed.add_field(name = "Instagram", value = f"[바로가기](https://www.instagram.com/{data['instagram']})", inline = False)
-            embed.add_field(name = "Weibo", value = f"[바로가기](https://weibo.com/u/{data['weibo']})", inline = False)
+    async def send_sns(self, ctx, name):
+        try:
+            if not self.aespa_data:
+                return await ctx.send("⚠️ 데이터를 불러올 수 없습니다. 관리자에게 문의하세요.")
 
-        await ctx.send(embed = embed)
+            data = self.aespa_data[name]
+            embed = discord.Embed(
+                title=f"{data.get('emoji', '✨')} Be my æ, {name}'s SNS", 
+                color=data.get('color', data.get('color1', 0x000000))
+            )
+
+            if name == "aespa":
+                embed.add_field(name="Facebook", value=f"[바로가기](https://www.facebook.com/{data['facebook']})", inline=True)
+                embed.add_field(name="Instagram", value=f"[바로가기](https://www.instagram.com/{data['instagram']})", inline=True)
+                embed.add_field(name="Tiktok", value=f"[바로가기](https://www.tiktok.com/@{data['tiktok']})", inline=True)
+                embed.add_field(name="Twitter", value=f"[바로가기](https://www.x.com/{data['twitter']})", inline=True)
+                embed.add_field(name="Weibo", value=f"[바로가기](https://weibo.com/u/{data['weibo']})", inline=False)            
+                embed.add_field(name="Youtube", value=f"[바로가기](https://www.youtube.com/@{data['youtube']})", inline=True)
+
+            elif name in ["karina", "giselle", "winter"]: 
+                embed.add_field(name="Instagram", value=f"[바로가기](https://www.instagram.com/{data['instagram']})", inline=False)
+
+            elif name == "ningning":
+                embed.add_field(name="Instagram", value=f"[바로가기](https://www.instagram.com/{data['instagram']})", inline=False)
+                embed.add_field(name="Weibo", value=f"[바로가기](https://weibo.com/u/{data['weibo']})", inline=False)
+
+            await ctx.send(embed=embed)
+        except Exception as e:
+            raise e
 
     @commands.command(name = "aespa", aliases = ['에스파'])
     async def aespa(self, ctx):

@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import logging
 from discord.ext import commands, tasks
 
 class CacheManager(commands.Cog):
@@ -8,7 +9,9 @@ class CacheManager(commands.Cog):
         self.bot = bot
         base_path = os.path.dirname(os.path.abspath(__file__))
         self.cache_file = os.path.join(base_path, "..", "tracking.json")
-        
+
+        self.logger = logging.getLogger('discord_errors')
+
         if not self.clean_cache_task.is_running():
             self.clean_cache_task.start()
 
@@ -32,9 +35,12 @@ class CacheManager(commands.Cog):
                 with open(self.cache_file, "w", encoding="utf-8") as f:
                     json.dump(new_data, f, ensure_ascii=False, indent=4)
                 print(f"🧹 캐시 정리 완료: {len(data) - len(new_data)}개의 항목 삭제됨.")
-
         except Exception as e:
-            print(f"❌ 캐시 정리 중 오류 발생: {e}")
+            self.logger.error(f"Error in CacheManager Task: {e}", exc_info=True)
+
+    @clean_cache_task.before_loop
+    async def before_clean_cache(self):
+        await self.bot.wait_until_ready()
 
 async def setup(bot):
     await bot.add_cog(CacheManager(bot))

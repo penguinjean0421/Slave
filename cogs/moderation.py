@@ -1,14 +1,16 @@
 import asyncio
 import re
+import logging
 from datetime import timedelta
 
 import discord
 from discord.ext import commands
 
-
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        self.logger = logging.getLogger('discord_errors')
 
     def parse_time(self, time_str: str):
         """시간 문자열(s, m, h, d)을 초 단위 정수로 변환합니다."""
@@ -38,109 +40,123 @@ class Moderation(commands.Cog):
     @commands.command(name="mute")
     @commands.has_permissions(administrator=True)
     async def server_mute(self, ctx, member: discord.Member = None, time: str = None):
-        if not member or not member.voice:
-            embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
+        try:
+            if not member or not member.voice:
+                embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
 
-        seconds = self.parse_time(time)
-        await member.edit(mute=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
+            seconds = self.parse_time(time)
+            await member.edit(mute=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
 
-        embed = discord.Embed(description=f"🔇 {member.mention} 마이크 차단 ({time or '무기한'})", color=0xE74C3C)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            embed = discord.Embed(description=f"🔇 {member.mention} 마이크 차단 ({time or '무기한'})", color=0xE74C3C)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
 
-        if seconds:
-            await asyncio.sleep(seconds)
-            if member.voice:
-                await member.edit(mute=False)
-                unmute_embed = discord.Embed(
-                    description=f"🔊 {member.mention} 뮤트 해제 (시간 종료)",
-                    color=0x2ECC71
-                )
-                if logger: await logger.send_log(ctx.guild, unmute_embed, type="punish")
+            if seconds:
+                await asyncio.sleep(seconds)
+                if member.voice:
+                    await member.edit(mute=False)
+                    unmute_embed = discord.Embed(
+                        description=f"🔊 {member.mention} 뮤트 해제 (시간 종료)",
+                        color=0x2ECC71
+                    )
+                    if logger: await logger.send_log(ctx.guild, unmute_embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="unmute")
     @commands.has_permissions(administrator=True)
     async def server_unmute(self, ctx, member: discord.Member = None):
-        if not member or not member.voice:
-            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
+        try: 
+            if not member or not member.voice:
+                embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
 
-        await member.edit(mute=False)
-        embed = discord.Embed(description=f"🔊 {member.mention} 마이크 차단 해제", color=0x2ECC71)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            await member.edit(mute=False)
+            embed = discord.Embed(description=f"🔊 {member.mention} 마이크 차단 해제", color=0x2ECC71)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="deafen")
     @commands.has_permissions(administrator=True)
     async def server_deafen(self, ctx, member: discord.Member = None, time: str = None):
-        if not member or not member.voice:
-            embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
+        try:
+            if not member or not member.voice:
+                embed = discord.Embed(description="❌ 대상을 찾을 수 없거나 음성 채널에 없습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
 
-        seconds = self.parse_time(time)
-        await member.edit(deafen=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
+            seconds = self.parse_time(time)
+            await member.edit(deafen=True, reason=f"실행자: {ctx.author} ({time or '무기한'})")
 
-        embed = discord.Embed(description=f"🔇 {member.mention} 헤드셋 차단 ({time or '무기한'})", color=0xE74C3C)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            embed = discord.Embed(description=f"🔇 {member.mention} 헤드셋 차단 ({time or '무기한'})", color=0xE74C3C)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
 
-        if seconds:
-            await asyncio.sleep(seconds)
-            if member.voice:
-                await member.edit(deafen=False)
-                embed = discord.Embed(
-                    description=f"🔊 {member.mention} 헤드셋 차단 해제 (시간 종료)",
-                    color=0x2ECC71
-                )
-                if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            if seconds:
+                await asyncio.sleep(seconds)
+                if member.voice:
+                    await member.edit(deafen=False)
+                    embed = discord.Embed(
+                        description=f"🔊 {member.mention} 헤드셋 차단 해제 (시간 종료)",
+                        color=0x2ECC71
+                    )
+                    if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="undeafen")
     @commands.has_permissions(administrator=True)
     async def server_undeafen(self, ctx, member: discord.Member = None):
-        if not member or not member.voice:
-            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
+        try:
+            if not member or not member.voice:
+                embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
 
-        await member.edit(deafen=False)
-        embed = discord.Embed(description=f"🔊 {member.mention} 헤드셋 차단 해제", color=0x2ECC71)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
-
+            await member.edit(deafen=False)
+            embed = discord.Embed(description=f"🔊 {member.mention} 헤드셋 차단 해제", color=0x2ECC71)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
+    
     @commands.command(name="vckick")
     @commands.has_permissions(administrator=True)
     async def server_vckick(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member or not member.voice:
-            embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
+        try:
+            if not member or not member.voice:
+                embed = discord.Embed(description="❌ 대상이 음성 채널에 없습니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
 
-        await member.move_to(None, reason=f"실행자: {ctx.author}")
-        embed = discord.Embed(
-            title="👟 음성 강제 퇴장",
-            description=f"{member.mention} 퇴장됨\n사유: {reason}",
-            color=0xE74C3C
-        )
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            await member.move_to(None, reason=f"실행자: {ctx.author}")
+            embed = discord.Embed(
+                title="👟 음성 강제 퇴장",
+                description=f"{member.mention} 퇴장됨\n사유: {reason}",
+                color=0xE74C3C
+            )
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="timeout")
     @commands.has_permissions(administrator=True)
     async def server_timeout(self, ctx, member: discord.Member = None, time: str = None, *, reason="사유 없음"):
-        seconds = self.parse_time(time)
-        if not member or not seconds:
-            embed = discord.Embed(
-                description=f"❓ 사용법: `{ctx.prefix}timeout @유저 [시간] [사유]`\n"
-                            f"예: `{ctx.prefix}timeout @유저 10m 도배`",
-                color=0x95A5A6
-            )
-            return await ctx.send(embed=embed)
-
         try:
+            seconds = self.parse_time(time)
+            if not member or not seconds:
+                embed = discord.Embed(
+                    description=f"❓ 사용법: `{ctx.prefix}timeout @유저 [시간] [사유]`\n예: `{ctx.prefix}timeout @유저 10m 도배`",
+                    color=0x95A5A6
+                )
+                return await ctx.send(embed=embed)
+
             await member.timeout(timedelta(seconds=seconds), reason=f"실행자: {ctx.author} | {reason}")
             embed = discord.Embed(
                 title="⏳ 타임아웃",
@@ -151,74 +167,88 @@ class Moderation(commands.Cog):
             logger = self.bot.get_cog('Logger')
             if logger: await logger.send_log(ctx.guild, embed, type="punish")
         except Exception as e:
-            await ctx.send(embed=discord.Embed(description=f"❌ 오류: {e}", color=0xE74C3C))
+            raise e
 
     @commands.command(name="untimeout")
     @commands.has_permissions(administrator=True)
     async def server_untimeout(self, ctx, member: discord.Member = None, *, reason="관리자에 의한 해제"):
-        if not member:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}untimeout @유저`", color=0x95A5A6)
-            return await ctx.send(embed=embed)
-
-        if not member.timed_out_until:
-            embed = discord.Embed(description=f"❌ {member.mention} 님은 현재 타임아웃 상태가 아닙니다.", color=0xE74C3C)
-            return await ctx.send(embed=embed)
-
         try:
+            if not member:
+                embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}untimeout @유저`", color=0x95A5A6)
+                return await ctx.send(embed=embed)
+
+            if not member.timed_out_until:
+                embed = discord.Embed(description=f"❌ {member.mention} 님은 현재 타임아웃 상태가 아닙니다.", color=0xE74C3C)
+                return await ctx.send(embed=embed)
+
             await member.timeout(None, reason=f"실행자: {ctx.author} | {reason}")
+            
             embed = discord.Embed(
                 title="✅ 타임아웃 해제",
                 description=f"{member.mention} 님의 타임아웃이 해제되었습니다.",
                 color=0x2ECC71
             )
             await ctx.send(embed=embed)
+
             logger = self.bot.get_cog('Logger')
-            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            if logger: 
+                await logger.send_log(ctx.guild, embed, type="punish")
+
         except Exception as e:
-            await ctx.send(embed=discord.Embed(description=f"❌ 오류 발생: {e}", color=0xE74C3C))
+            raise e
 
     @commands.command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def server_kick(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}kick @유저 [사유]`", color=0x95A5A6)
-            return await ctx.send(embed=embed)
-            
-        await member.kick(reason=f"실행자: {ctx.author} | {reason}")
-        embed = discord.Embed(title="👞 추방 완료", description=f"{member.mention} 추방됨\n사유: {reason}", color=0xE74C3C)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        try:
+            if not member:
+                embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}kick @유저 [사유]`", color=0x95A5A6)
+                return await ctx.send(embed=embed)
+                
+            await member.kick(reason=f"실행자: {ctx.author} | {reason}")
+            embed = discord.Embed(title="👞 추방 완료", description=f"{member.mention} 추방됨\n사유: {reason}", color=0xE74C3C)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def server_ban(self, ctx, member: discord.Member = None, *, reason="사유 없음"):
-        if not member:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}ban [유저멘션/ID] [사유]`", color=0x95A5A6)
-            return await ctx.send(embed=embed)
+        try:
+            if not member:
+                embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}ban [유저멘션/ID] [사유]`", color=0x95A5A6)
+                return await ctx.send(embed=embed)
 
-        await member.ban(reason=f"실행자: {ctx.author} | {reason}", delete_message_seconds=86400)
-        embed = discord.Embed(title="🚫 차단 완료", description=f"{member.mention} 차단됨\n사유: {reason}", color=0xE74C3C)
-        await ctx.send(embed=embed)
-        logger = self.bot.get_cog('Logger')
-        if logger: await logger.send_log(ctx.guild, embed, type="punish")
+            await member.ban(reason=f"실행자: {ctx.author} | {reason}", delete_message_seconds=86400)
+            embed = discord.Embed(title="🚫 차단 완료", description=f"{member.mention} 차단됨\n사유: {reason}", color=0xE74C3C)
+            await ctx.send(embed=embed)
+            logger = self.bot.get_cog('Logger')
+            if logger: await logger.send_log(ctx.guild, embed, type="punish")
+        except Exception as e:
+            raise e
 
     @commands.command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def server_unban(self, ctx, *, user_spec: str = None):
-        if not user_spec:
-            embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}unban [이름#태그] 또는 [ID]`", color=0x95A5A6)
-            return await ctx.send(embed=embed)
+        try:
+            if not user_spec:
+                embed = discord.Embed(description=f"❓ 사용법: `{ctx.prefix}unban [이름#태그] 또는 [ID]`", color=0x95A5A6)
+                return await ctx.send(embed=embed)
 
-        async for entry in ctx.guild.bans():
-            if user_spec in [str(entry.user.id), str(entry.user)]:
-                await ctx.guild.unban(entry.user)
-                embed = discord.Embed(title="✅ 차단 해제", description=f"{entry.user} 해제됨", color=0x2ECC71)
-                await ctx.send(embed=embed)
-                logger = self.bot.get_cog('Logger')
-                if logger: return await logger.send_log(ctx.guild, embed, type="punish")
-        await ctx.send(embed=discord.Embed(description="❌ 차단 목록에서 찾을 수 없습니다.", color=0xE74C3C))
-
+            async for entry in ctx.guild.bans():
+                if user_spec in [str(entry.user.id), str(entry.user)]:
+                    await ctx.guild.unban(entry.user)
+                    embed = discord.Embed(title="✅ 차단 해제", description=f"{entry.user} 해제됨", color=0x2ECC71)
+                    await ctx.send(embed=embed)
+                    logger = self.bot.get_cog('Logger')
+                    if logger: await logger.send_log(ctx.guild, embed, type="punish")
+                    return
+            
+            await ctx.send(embed=discord.Embed(description="❌ 차단 목록에서 찾을 수 없습니다.", color=0xE74C3C))
+        except Exception as e:
+            raise e
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
