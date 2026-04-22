@@ -1,9 +1,11 @@
 {
     "lol 국가:닉네임#태그": {
         "timestamp": "갱신한 시간",
+        "riotid": "닉네임#태그",
+        "region": "국가",
+        "level": "레벨",
+        "icon": "아이콘 정보",
         "data": {
-            "level": "레벨",
-            "icon": "아이콘 정보",
             "solo": {
                 "tier": "현시즌 솔랭 티어",
                 "lp": "솔랭 Lp",
@@ -20,14 +22,29 @@
     },
     "pubg 플랫폼:닉네임": {
         "timestamp": "갱신한 시간",
-        "data": {
-            "nickname": "닉네임",
-            "platform": "플랫폼(steam/kakao)",
-            "adr": "평균 딜량",
-            "kd": "킬데스",
-            "win_rate": "승룰",
-            "top10": "탑텐들어간확률",
-            "rounds": "경기 수"
+        "nickname": "닉네임",
+        "platform": "플랫폼(steam, kakao, psn, xbox)",
+        "stats": {
+            "squad": {
+                "adr": 148,
+                "kd": 0.95,
+                "win_rate": "4.8%",
+                "top10": "35.2%",
+                "rounds": 3495,
+                "tier": "Normal",
+                "sub_tier": "",
+                "point": 0
+            },
+            "ranked-squad": {
+                "adr": 582,
+                "kd": 15.0,
+                "win_rate": "69.4%",
+                "top10": "0.0%",
+                "rounds": 36,
+                "tier": "Survivor",
+                "sub_tier": "1",
+                "point": 4283
+            }
         }
     }
 }
