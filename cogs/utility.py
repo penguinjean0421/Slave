@@ -82,5 +82,61 @@ class Utility(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    @commands.command(name="kill")
+    async def kill_reason(self, ctx, member: discord.Member = None):
+        monsters = ["교수", "과제", "시험"]
+
+        death_messages = [
+        "높은 곳에서 떨어졌습니다.",
+        "바닥에 너무 세게 부딪혔습니다.",
+        "용암에 빠졌습니다.",
+        "불타버렸습니다.",
+        "선인장에 찔려 죽었습니다.",
+        "물속에서 숨이 막혔습니다.",
+        "벽 속에서 압사당했습니다.",
+        "번개에 맞았습니다.",
+        "마법으로 살해당했습니다.",
+        "폭발에 휘말렸습니다.",
+        "얼어 죽었습니다.",
+        "겉날개를 타던 중 벽에 부딪혔습니다.",
+        "너무 배가 고파서 죽었습니다.",
+        "자신의 포션에 독살당했습니다.",
+        "{attacker}에게 살해당했습니다.",
+        "{attacker}에게 저격당했습니다.",
+        "{attacker}에 의해 운명을 달리했습니다.",
+        "{attacker}이(가) 쏜 화살에 맞았습니다.",
+        "{attacker}와(과) 싸우다 너무 높이 올라갔습니다.",
+        "{attacker}와(과) 싸우던 중 용암에 빠졌습니다.",
+        "{attacker}에게 밀려 선인장에 찔려 죽었습니다.",
+        "{attacker}에 의해 불타버렸습니다.",
+        "{attacker}에게 쫓기다 구석에 몰려 압사당했습니다.",
+        "{attacker}와(과) 교전 중 폭발에 휘말렸습니다.",
+        "{attacker}이(가) 던진 삼차창에 꿰뚫렸습니다.",
+        "{attacker}이(가) 던진 포션에 의해 독살당했습니다.",
+        "{attacker}의 협박으로 사망하셨습니다."
+        ]
+
+        target = member if member else ctx.author
+        chosen_msg = random.choice(death_messages)
+
+        if "{attacker}" in chosen_msg:
+            embed_color = 0xff0000
+
+            if member is None or member == ctx.author:
+                attacker_name = f"**{random.choice(monsters)}**"
+            else:
+                attacker_name = f"**{ctx.author.display_name}**"
+
+            full_message = chosen_msg.format(attacker=attacker_name)
+        else:
+            embed_color=0x36393F
+            full_message = chosen_msg
+
+        embed=discord.Embed(
+            description=f"**{target.display_name}**이(가) {full_message}",
+            color=embed_color
+        )
+        await ctx.send(embed=embed)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Utility(bot))
